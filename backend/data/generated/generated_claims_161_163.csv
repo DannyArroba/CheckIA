@@ -1,0 +1,4 @@
+﻿claim_id;policy_id;customer_id;anonymous_customer;vehicle_id;provider_id;line;coverage;city;claim_date;report_date;claim_amount;narrative;recent_customer_change
+CLM-0161;POL-0037;CUST-001;Asegurado-001;;PRV-002;Hogar;Choque parcial;Guayaquil;2026-05-18;2026-06-05;54129.14;Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.;True
+CLM-0162;POL-0086;CUST-076;Asegurado-076;;PRV-007;Vida;Danos a maquinaria;Loja;2025-10-29;2025-11-14;3217.73;Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.;False
+CLM-0163;POL-0043;CUST-083;Asegurado-083;;PRV-003;Vida;Gastos medicos;Cuenca;2025-04-15;2025-04-19;48003.48;Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.;False

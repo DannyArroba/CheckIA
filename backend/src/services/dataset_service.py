@@ -85,7 +85,7 @@ def generate_additional_claims(count: int = 25, risk_mix: str = "balanceado") ->
     generated_dir = DATA_DIR / "generated"
     generated_dir.mkdir(parents=True, exist_ok=True)
     export_path = generated_dir / f"generated_claims_{len(claims) + 1}_{len(claims) + count}.csv"
-    new_claims.to_csv(export_path, index=False)
+    new_claims.to_csv(export_path, index=False, sep=";", encoding="utf-8-sig")
     return {
         "created": len(new_claims),
         "csv_file": export_path.name,
@@ -94,8 +94,16 @@ def generate_additional_claims(count: int = 25, risk_mix: str = "balanceado") ->
     }
 
 
+def _read_uploaded_csv(file_path: Path) -> pd.DataFrame:
+    try:
+        return pd.read_csv(file_path, sep=None, engine="python", encoding="utf-8-sig")
+    except UnicodeDecodeError:
+        return pd.read_csv(file_path, sep=None, engine="python", encoding="latin-1")
+
+
 def append_uploaded_claims(file_path: Path) -> dict:
-    incoming = pd.read_csv(file_path)
+    incoming = _read_uploaded_csv(file_path)
+    incoming.columns = [str(column).strip().replace("\ufeff", "") for column in incoming.columns]
     required = {
         "claim_id", "policy_id", "customer_id", "anonymous_customer", "provider_id",
         "line", "coverage", "city", "claim_date", "report_date", "claim_amount", "narrative",

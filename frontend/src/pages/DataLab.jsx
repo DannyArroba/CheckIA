@@ -100,7 +100,7 @@ export default function DataLab() {
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <h3 className="text-xl font-bold text-ink">Generador de siniestros sintéticos</h3>
-        <p className="mt-1 text-sm text-slate-600">Crea un CSV para descargar. No modifica el sistema hasta que tú lo cargues manualmente.</p>
+        <p className="mt-1 text-sm text-slate-600">Crea un CSV descargable separado por punto y coma para abrirlo bien en Excel. No modifica el sistema hasta que tú lo cargues manualmente.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-[160px_190px_auto]">
           <input type="number" min="1" max="100" value={count} onChange={(event) => setCount(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-3" />
           <select value={riskMix} onChange={(event) => setRiskMix(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-3">
@@ -115,7 +115,7 @@ export default function DataLab() {
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <h3 className="text-xl font-bold text-ink">Cargar CSV de siniestros</h3>
-        <p className="mt-1 text-sm text-slate-600">Debe incluir columnas como claim_id, policy_id, customer_id, provider_id, line, coverage, city, fechas, monto y narrativa.</p>
+        <p className="mt-1 text-sm text-slate-600">Acepta CSV separado por punto y coma o coma. Debe incluir columnas como claim_id, policy_id, customer_id, provider_id, line, coverage, city, fechas, monto y narrativa.</p>
         <label className="mt-4 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-4 font-semibold hover:bg-slate-50">
           <UploadCloud size={18} /> Seleccionar CSV desde mi PC
           <input type="file" accept=".csv" className="hidden" onChange={upload} />

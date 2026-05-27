@@ -48,7 +48,7 @@ DB_PASSWORD=
 DB_NAME=checkia
 ```
 
-La página **Datos** permite verificar conexión, sincronizar CSV y resultados IA, generar nuevos CSV sintéticos descargables, cargar un CSV desde tu PC y comprobar que dashboard/casos/agente se actualizan.
+La página **Datos** permite verificar conexión, sincronizar CSV y resultados IA, generar nuevos CSV sintéticos descargables, cargar un CSV desde tu PC y comprobar que dashboard/casos/agente se actualizan. Los CSV generados usan `;` y `utf-8-sig` para abrirse correctamente por columnas en Excel.
 
 ## Ollama Local
 
