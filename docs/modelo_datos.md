@@ -61,3 +61,24 @@ Documentos por siniestro:
 - `status`
 
 Estados posibles: completo, faltante, ilegible e inconsistente.
+
+## Base SQL
+
+El esquema relacional está en `database/checkia.sql` y crea la base `checkia`.
+
+Tablas principales:
+
+- `customers`
+- `policies`
+- `providers`
+- `claims`
+- `claim_documents`
+- `claim_risk_results`
+- `claim_rule_results`
+- `agent_messages`
+
+Vistas:
+
+- `vw_dashboard_summary`
+- `vw_provider_alerts`
+- `vw_city_alerts`

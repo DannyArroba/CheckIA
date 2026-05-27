@@ -1,9 +1,10 @@
-import { BarChart3, Bot, FileText, Info, ShieldCheck, Table2 } from 'lucide-react'
+import { BarChart3, Bot, Database, FileText, Info, ShieldCheck, Table2 } from 'lucide-react'
 
 const items = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
   { id: 'cases', label: 'Casos', icon: Table2 },
   { id: 'agent', label: 'Agente IA', icon: Bot },
+  { id: 'data', label: 'Datos', icon: Database },
   { id: 'reports', label: 'Reportes', icon: FileText },
   { id: 'about', label: 'Acerca de', icon: Info }
 ]

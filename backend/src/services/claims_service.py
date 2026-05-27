@@ -5,10 +5,12 @@ from functools import lru_cache
 import pandas as pd
 
 from backend.src.ai_agent.claims_agent import ClaimsAgent
+from backend.src.ai_agent.ollama_client import OllamaClient
 from backend.src.explainability.explain_score import explain_claim, risk_level
 from backend.src.features.build_features import build_claim_contexts, build_model_features
 from backend.src.ingestion.load_data import load_all_data
 from backend.src.models.fraud_model import FraudRiskModel
+from backend.src.services.database_service import save_agent_message, sync_risk_results, sync_source_tables
 
 
 @lru_cache(maxsize=1)
@@ -130,5 +132,19 @@ def executive_report() -> dict:
     }
 
 
-def ask_agent(message: str) -> dict:
-    return ClaimsAgent(get_claims_dataset()).answer(message)
+def ask_agent(message: str, conversation_id: int | None = None) -> dict:
+    conversation_id = save_agent_message("usuario", message, "usuario", conversation_id)
+    response = ClaimsAgent(get_claims_dataset()).answer(message)
+    save_agent_message("agente", response["answer"], response.get("provider", "reglas"), conversation_id)
+    response["conversation_id"] = conversation_id
+    return response
+
+
+def agent_status() -> dict:
+    return OllamaClient().status()
+
+
+def sync_database() -> dict:
+    source_counts = sync_source_tables()
+    risk_counts = sync_risk_results(get_claims_dataset())
+    return {"source": source_counts, "risk": risk_counts}

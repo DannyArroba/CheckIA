@@ -1,0 +1,31 @@
+claim_id,policy_id,customer_id,anonymous_customer,vehicle_id,provider_id,line,coverage,city,claim_date,report_date,claim_amount,narrative,recent_customer_change
+CLM-0161,POL-0085,CUST-067,Asegurado-067,,PRV-002,Vida,Danos a maquinaria,Manta,2025-10-24,2025-10-28,44955.4,Danos por agua reportados luego de lluvias intensas con fotografias de soporte.,False
+CLM-0162,POL-0057,CUST-009,Asegurado-009,,PRV-004,Empresarial,Choque parcial,Ambato,2026-07-17,2026-07-20,7373.29,Danos por agua reportados luego de lluvias intensas con fotografias de soporte.,False
+CLM-0163,POL-0068,CUST-063,Asegurado-063,,PRV-007,Empresarial,Danos a maquinaria,Ambato,2026-04-26,2026-04-26,7547.03,Danos por agua reportados luego de lluvias intensas con fotografias de soporte.,False
+CLM-0164,POL-0126,CUST-053,Asegurado-053,,PRV-004,Salud,Gastos medicos,Ambato,2025-07-31,2025-08-06,35901.6,"Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.",False
+CLM-0165,POL-0083,CUST-020,Asegurado-020,,PRV-003,Empresarial,Perdida total por robo,Quito,2025-09-19,2025-09-25,2370.06,Reporte de robo en parqueadero residencial durante la noche.,False
+CLM-0166,POL-0007,CUST-004,Asegurado-004,VEH-077,PRV-006,Vehiculos,Gastos medicos,Guayaquil,2025-11-21,2025-11-23,4627.98,Atencion medica por emergencia con facturas y epicrisis adjuntas.,False
+CLM-0167,POL-0118,CUST-076,Asegurado-076,,PRV-005,Empresarial,Danos a maquinaria,Loja,2026-08-14,2026-08-14,14093.27,Atencion medica por emergencia con facturas y epicrisis adjuntas.,False
+CLM-0168,POL-0087,CUST-027,Asegurado-027,,PRV-009,Salud,Robo domiciliario,Quito,2025-11-05,2025-11-08,2146.13,"Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.",False
+CLM-0169,POL-0096,CUST-065,Asegurado-065,,PRV-007,Empresarial,Choque parcial,Cuenca,2026-01-27,2026-01-29,14309.39,Accidente con tercero identificado y soporte fotografico completo.,False
+CLM-0170,POL-0023,CUST-059,Asegurado-059,,PRV-002,Vida,Perdida total por robo,Quito,2026-03-13,2026-03-19,7433.19,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",False
+CLM-0171,POL-0033,CUST-020,Asegurado-020,,PRV-010,Salud,Choque parcial,Quito,2025-07-28,2025-08-11,9519.85,"Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.",False
+CLM-0172,POL-0036,CUST-075,Asegurado-075,VEH-085,PRV-002,Vehiculos,Gastos medicos,Manta,2026-01-29,2026-02-14,54293.3,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",False
+CLM-0173,POL-0036,CUST-075,Asegurado-075,VEH-059,PRV-003,Vehiculos,Robo domiciliario,Manta,2026-09-25,2026-09-27,28615.5,Atencion medica por emergencia con facturas y epicrisis adjuntas.,False
+CLM-0174,POL-0114,CUST-054,Asegurado-054,,PRV-007,Vida,Perdida total por robo,Santo Domingo,2026-02-12,2026-02-15,6403.57,Reporte de robo en parqueadero residencial durante la noche.,False
+CLM-0175,POL-0094,CUST-077,Asegurado-077,,PRV-003,Empresarial,Perdida total por robo,Loja,2025-07-18,2025-07-20,37729.53,Reporte de robo en parqueadero residencial durante la noche.,False
+CLM-0176,POL-0099,CUST-074,Asegurado-074,VEH-081,PRV-007,Vehiculos,Danos a maquinaria,Loja,2026-08-25,2026-08-25,5052.82,Danos por agua reportados luego de lluvias intensas con fotografias de soporte.,False
+CLM-0177,POL-0039,CUST-029,Asegurado-029,,PRV-006,Hogar,Gastos medicos,Santo Domingo,2025-09-20,2025-09-20,50274.04,Danos por agua reportados luego de lluvias intensas con fotografias de soporte.,False
+CLM-0178,POL-0100,CUST-067,Asegurado-067,,PRV-006,Vida,Choque parcial,Manta,2026-01-11,2026-01-11,4435.32,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",False
+CLM-0179,POL-0057,CUST-009,Asegurado-009,,PRV-002,Empresarial,Perdida total por robo,Ambato,2026-05-14,2026-05-16,5232.95,"Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.",False
+CLM-0180,POL-0083,CUST-020,Asegurado-020,,PRV-002,Empresarial,Perdida total por robo,Quito,2025-11-14,2025-11-24,7297.78,"Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.",False
+CLM-0181,POL-0095,CUST-060,Asegurado-060,,PRV-010,Hogar,Gastos medicos,Machala,2026-01-19,2026-02-08,56386.31,"Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.",False
+CLM-0182,POL-0076,CUST-025,Asegurado-025,,PRV-003,Hogar,Gastos medicos,Machala,2026-02-05,2026-02-09,17733.84,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",False
+CLM-0183,POL-0128,CUST-043,Asegurado-043,,PRV-010,Empresarial,Danos a maquinaria,Ambato,2025-10-24,2025-10-28,7078.17,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",False
+CLM-0184,POL-0015,CUST-071,Asegurado-071,,PRV-010,Salud,Gastos medicos,Loja,2025-06-05,2025-06-23,50126.21,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",True
+CLM-0185,POL-0089,CUST-001,Asegurado-001,,PRV-002,Vida,Robo domiciliario,Guayaquil,2026-03-25,2026-03-31,39496.64,Danos por agua reportados luego de lluvias intensas con fotografias de soporte.,False
+CLM-0186,POL-0014,CUST-086,Asegurado-086,,PRV-007,Vida,Gastos medicos,Cuenca,2026-03-12,2026-03-28,61624.61,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",False
+CLM-0187,POL-0086,CUST-076,Asegurado-076,,PRV-003,Vida,Perdida total por robo,Loja,2025-11-05,2025-11-07,2156.46,Atencion medica por emergencia con facturas y epicrisis adjuntas.,False
+CLM-0188,POL-0088,CUST-031,Asegurado-031,,PRV-002,Salud,Danos a maquinaria,Loja,2025-10-21,2025-11-03,5332.58,"Accidente sin tercero identificado, no hubo testigos y el reporte se realizo dias despues.",False
+CLM-0189,POL-0060,CUST-023,Asegurado-023,,PRV-002,Empresarial,Gastos medicos,Loja,2025-12-22,2026-01-08,18557.85,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",False
+CLM-0190,POL-0013,CUST-085,Asegurado-085,VEH-028,PRV-001,Vehiculos,Robo domiciliario,Cuenca,2026-12-18,2027-01-07,18346.0,"Evento ocurrido en zona aislada durante la madrugada, sin testigos identificados.",False

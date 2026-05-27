@@ -1,8 +1,35 @@
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
+import { claimsApi } from '../api/claimsApi.js'
 import RiskBadge from './RiskBadge.jsx'
 
+const reviewOptions = [
+  { value: 'pendiente', label: 'Pendiente' },
+  { value: 'bajo_observacion', label: 'Bajo observación' },
+  { value: 'documentacion_solicitada', label: 'Documentación solicitada' },
+  { value: 'derivado_analista', label: 'Derivado a analista' },
+  { value: 'revisado_sin_alerta', label: 'Revisado sin alerta adicional' }
+]
+
 export default function ClaimDetail({ claim, onClose }) {
+  const [reviewStatus, setReviewStatus] = useState('pendiente')
+  const [reviewNote, setReviewNote] = useState('')
+  const [reviews, setReviews] = useState([])
+
+  useEffect(() => {
+    if (!claim) return
+    claimsApi.reviewActions(claim.claim_id).then(setReviews).catch(() => setReviews([]))
+  }, [claim])
+
   if (!claim) return null
+
+  async function saveReview() {
+    await claimsApi.createReviewAction(claim.claim_id, reviewStatus, reviewNote)
+    setReviewNote('')
+    const rows = await claimsApi.reviewActions(claim.claim_id)
+    setReviews(rows)
+  }
+
   return (
     <div className="fixed inset-0 z-40 bg-ink/30 p-4 backdrop-blur-sm" onClick={onClose}>
       <aside className="ml-auto h-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-soft" onClick={(event) => event.stopPropagation()}>
@@ -61,9 +88,31 @@ export default function ClaimDetail({ claim, onClose }) {
           </ul>
           <p className="mt-4 rounded-lg bg-blue-50 p-4 text-sm font-semibold text-blue-900">{claim.explainability?.mensaje_etico}</p>
         </Section>
+        <Section title="Seguimiento humano">
+          <p className="mb-3 text-sm text-slate-600">Este estado no aprueba ni niega un siniestro. Solo registra el avance de revisión del analista.</p>
+          <div className="grid gap-3">
+            <select value={reviewStatus} onChange={(event) => setReviewStatus(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-3">
+              {reviewOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} className="min-h-24 rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-electric" placeholder="Nota interna de revisión humana" />
+            <button onClick={saveReview} className="min-h-11 rounded-lg bg-ink px-4 font-semibold text-white hover:bg-slate-800">Guardar seguimiento</button>
+          </div>
+          <div className="mt-4 space-y-2">
+            {reviews.map((item) => (
+              <div key={item.review_id} className="rounded-lg bg-slate-50 p-3 text-sm">
+                <p className="font-bold text-ink">{labelForStatus(item.status)}</p>
+                {item.note && <p className="mt-1 text-slate-600">{item.note}</p>}
+              </div>
+            ))}
+          </div>
+        </Section>
       </aside>
     </div>
   )
+}
+
+function labelForStatus(status) {
+  return reviewOptions.find((option) => option.value === status)?.label || status
 }
 
 function Metric({ label, value }) {

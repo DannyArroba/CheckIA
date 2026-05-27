@@ -4,6 +4,7 @@ const titles = {
   dashboard: 'Panel de control',
   cases: 'Siniestros analizados',
   agent: 'Agente IA',
+  data: 'Datos y entrenamiento',
   reports: 'Reportes ejecutivos',
   about: 'Acerca de CheckIA'
 }
