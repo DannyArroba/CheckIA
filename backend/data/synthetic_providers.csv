@@ -1,0 +1,11 @@
+provider_id,provider_name,provider_type,provider_city,restricted_simulated
+PRV-001,Taller Andino Norte,taller,Quito,False
+PRV-002,Clinica San Rafael,clinica,Guayaquil,False
+PRV-003,AutoExpress Costa,taller,Guayaquil,True
+PRV-004,Peritajes Sierra,peritaje,Cuenca,False
+PRV-005,Repuestos Universal,repuestos,Manta,False
+PRV-006,Centro Medico Integral,clinica,Quito,False
+PRV-007,Taller Rapido Sur,taller,Machala,True
+PRV-008,Servicios Hogar Seguro,hogar,Ambato,False
+PRV-009,Diagnostico Metropolitano,clinica,Loja,False
+PRV-010,Peritos del Pacifico,peritaje,Santo Domingo,False

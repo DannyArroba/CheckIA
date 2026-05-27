@@ -1,0 +1,91 @@
+customer_id,anonymous_customer,city,age_range,segment,recent_customer_change
+CUST-001,Asegurado-001,Guayaquil,18-25,Corporativo,False
+CUST-002,Asegurado-002,Manta,26-35,Corporativo,True
+CUST-003,Asegurado-003,Guayaquil,60+,Pyme,True
+CUST-004,Asegurado-004,Guayaquil,26-35,Individual,False
+CUST-005,Asegurado-005,Quito,60+,Individual,False
+CUST-006,Asegurado-006,Machala,26-35,Pyme,False
+CUST-007,Asegurado-007,Quito,26-35,Corporativo,False
+CUST-008,Asegurado-008,Loja,26-35,Individual,False
+CUST-009,Asegurado-009,Ambato,18-25,Individual,False
+CUST-010,Asegurado-010,Ambato,36-45,Corporativo,False
+CUST-011,Asegurado-011,Quito,46-60,Corporativo,True
+CUST-012,Asegurado-012,Machala,18-25,Corporativo,False
+CUST-013,Asegurado-013,Ambato,60+,Individual,False
+CUST-014,Asegurado-014,Quito,26-35,Pyme,False
+CUST-015,Asegurado-015,Manta,18-25,Pyme,False
+CUST-016,Asegurado-016,Ambato,26-35,Pyme,False
+CUST-017,Asegurado-017,Loja,18-25,Corporativo,False
+CUST-018,Asegurado-018,Manta,26-35,Pyme,False
+CUST-019,Asegurado-019,Manta,36-45,Individual,False
+CUST-020,Asegurado-020,Quito,36-45,Pyme,False
+CUST-021,Asegurado-021,Manta,60+,Corporativo,False
+CUST-022,Asegurado-022,Santo Domingo,46-60,Corporativo,False
+CUST-023,Asegurado-023,Loja,26-35,Individual,False
+CUST-024,Asegurado-024,Loja,60+,Pyme,False
+CUST-025,Asegurado-025,Machala,36-45,Individual,False
+CUST-026,Asegurado-026,Cuenca,60+,Pyme,True
+CUST-027,Asegurado-027,Quito,18-25,Individual,False
+CUST-028,Asegurado-028,Machala,60+,Individual,False
+CUST-029,Asegurado-029,Santo Domingo,60+,Pyme,False
+CUST-030,Asegurado-030,Quito,18-25,Corporativo,False
+CUST-031,Asegurado-031,Loja,36-45,Individual,False
+CUST-032,Asegurado-032,Cuenca,46-60,Individual,False
+CUST-033,Asegurado-033,Loja,60+,Individual,False
+CUST-034,Asegurado-034,Guayaquil,36-45,Corporativo,False
+CUST-035,Asegurado-035,Manta,26-35,Pyme,False
+CUST-036,Asegurado-036,Quito,60+,Pyme,False
+CUST-037,Asegurado-037,Guayaquil,36-45,Pyme,False
+CUST-038,Asegurado-038,Manta,60+,Individual,True
+CUST-039,Asegurado-039,Santo Domingo,18-25,Corporativo,False
+CUST-040,Asegurado-040,Cuenca,46-60,Corporativo,False
+CUST-041,Asegurado-041,Machala,26-35,Corporativo,False
+CUST-042,Asegurado-042,Manta,36-45,Pyme,False
+CUST-043,Asegurado-043,Ambato,46-60,Corporativo,False
+CUST-044,Asegurado-044,Manta,26-35,Individual,False
+CUST-045,Asegurado-045,Manta,60+,Individual,True
+CUST-046,Asegurado-046,Quito,26-35,Individual,False
+CUST-047,Asegurado-047,Ambato,18-25,Corporativo,False
+CUST-048,Asegurado-048,Santo Domingo,26-35,Corporativo,True
+CUST-049,Asegurado-049,Santo Domingo,26-35,Pyme,False
+CUST-050,Asegurado-050,Manta,18-25,Individual,False
+CUST-051,Asegurado-051,Ambato,46-60,Pyme,False
+CUST-052,Asegurado-052,Quito,18-25,Individual,False
+CUST-053,Asegurado-053,Ambato,18-25,Individual,False
+CUST-054,Asegurado-054,Santo Domingo,26-35,Pyme,False
+CUST-055,Asegurado-055,Santo Domingo,26-35,Individual,False
+CUST-056,Asegurado-056,Guayaquil,18-25,Corporativo,False
+CUST-057,Asegurado-057,Quito,18-25,Individual,False
+CUST-058,Asegurado-058,Santo Domingo,46-60,Individual,False
+CUST-059,Asegurado-059,Quito,26-35,Pyme,True
+CUST-060,Asegurado-060,Machala,36-45,Pyme,False
+CUST-061,Asegurado-061,Santo Domingo,26-35,Individual,False
+CUST-062,Asegurado-062,Quito,60+,Corporativo,False
+CUST-063,Asegurado-063,Ambato,18-25,Individual,False
+CUST-064,Asegurado-064,Cuenca,18-25,Corporativo,True
+CUST-065,Asegurado-065,Cuenca,18-25,Corporativo,True
+CUST-066,Asegurado-066,Manta,46-60,Individual,False
+CUST-067,Asegurado-067,Manta,60+,Corporativo,True
+CUST-068,Asegurado-068,Guayaquil,46-60,Corporativo,False
+CUST-069,Asegurado-069,Ambato,36-45,Individual,False
+CUST-070,Asegurado-070,Ambato,26-35,Pyme,False
+CUST-071,Asegurado-071,Loja,46-60,Pyme,False
+CUST-072,Asegurado-072,Guayaquil,18-25,Pyme,False
+CUST-073,Asegurado-073,Guayaquil,18-25,Corporativo,False
+CUST-074,Asegurado-074,Loja,26-35,Pyme,False
+CUST-075,Asegurado-075,Manta,36-45,Pyme,True
+CUST-076,Asegurado-076,Loja,60+,Corporativo,False
+CUST-077,Asegurado-077,Loja,18-25,Individual,False
+CUST-078,Asegurado-078,Guayaquil,60+,Individual,False
+CUST-079,Asegurado-079,Manta,36-45,Individual,False
+CUST-080,Asegurado-080,Loja,60+,Pyme,False
+CUST-081,Asegurado-081,Quito,18-25,Corporativo,False
+CUST-082,Asegurado-082,Loja,18-25,Individual,False
+CUST-083,Asegurado-083,Cuenca,36-45,Individual,False
+CUST-084,Asegurado-084,Machala,60+,Individual,True
+CUST-085,Asegurado-085,Cuenca,60+,Individual,False
+CUST-086,Asegurado-086,Cuenca,46-60,Individual,True
+CUST-087,Asegurado-087,Ambato,18-25,Pyme,False
+CUST-088,Asegurado-088,Manta,18-25,Pyme,False
+CUST-089,Asegurado-089,Machala,60+,Corporativo,True
+CUST-090,Asegurado-090,Manta,26-35,Individual,False
