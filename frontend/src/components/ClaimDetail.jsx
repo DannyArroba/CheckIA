@@ -18,10 +18,13 @@ export default function ClaimDetail({ claim, onClose }) {
 
   useEffect(() => {
     if (!claim) return
+    setReviewStatus(claim.review_status || 'pendiente')
     claimsApi.reviewActions(claim.claim_id).then(setReviews).catch(() => setReviews([]))
   }, [claim])
 
   if (!claim) return null
+
+  const latest = reviews[0]
 
   async function saveReview() {
     await claimsApi.createReviewAction(claim.claim_id, reviewStatus, reviewNote)
@@ -36,12 +39,34 @@ export default function ClaimDetail({ claim, onClose }) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-bold text-electric">{claim.claim_id}</p>
-            <h3 className="text-2xl font-bold text-ink">{claim.anonymous_customer}</h3>
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <h3 className="text-2xl font-bold text-ink">{claim.anonymous_customer}</h3>
+              <ReviewBadge status={latest?.status || claim.review_status} label={latest ? labelForStatus(latest.status) : claim.review_label} />
+            </div>
+            {latest?.note && <p className="mt-2 max-w-xl text-sm text-slate-500">{latest.note}</p>}
           </div>
           <button className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50" onClick={onClose} aria-label="Cerrar">
             <X size={19} />
           </button>
         </div>
+
+        <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-48 flex-1">
+              <label className="text-xs font-bold uppercase text-slate-500">Seguimiento humano</label>
+              <select value={reviewStatus} onChange={(event) => setReviewStatus(event.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3">
+                {reviewOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </div>
+            <div className="min-w-56 flex-[1.4]">
+              <label className="text-xs font-bold uppercase text-slate-500">Nota interna</label>
+              <input value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-electric" placeholder="Ej. solicitar factura legible" />
+            </div>
+            <button onClick={saveReview} className="min-h-11 rounded-lg bg-ink px-4 font-semibold text-white hover:bg-slate-800">Guardar</button>
+          </div>
+          <p className="mt-3 text-xs text-slate-500">Este estado no aprueba ni niega un siniestro. Solo registra el avance de revisión del analista.</p>
+        </div>
+
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <Metric label="Score" value={claim.risk_score} />
           <Metric label="Nivel" value={<RiskBadge level={claim.risk_level} />} />
@@ -88,27 +113,21 @@ export default function ClaimDetail({ claim, onClose }) {
           </ul>
           <p className="mt-4 rounded-lg bg-blue-50 p-4 text-sm font-semibold text-blue-900">{claim.explainability?.mensaje_etico}</p>
         </Section>
-        <Section title="Seguimiento humano">
-          <p className="mb-3 text-sm text-slate-600">Este estado no aprueba ni niega un siniestro. Solo registra el avance de revisión del analista.</p>
-          <div className="grid gap-3">
-            <select value={reviewStatus} onChange={(event) => setReviewStatus(event.target.value)} className="min-h-11 rounded-lg border border-slate-200 px-3">
-              {reviewOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-            <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} className="min-h-24 rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-electric" placeholder="Nota interna de revisión humana" />
-            <button onClick={saveReview} className="min-h-11 rounded-lg bg-ink px-4 font-semibold text-white hover:bg-slate-800">Guardar seguimiento</button>
-          </div>
-          <div className="mt-4 space-y-2">
-            {reviews.map((item) => (
-              <div key={item.review_id} className="rounded-lg bg-slate-50 p-3 text-sm">
-                <p className="font-bold text-ink">{labelForStatus(item.status)}</p>
-                {item.note && <p className="mt-1 text-slate-600">{item.note}</p>}
-              </div>
-            ))}
-          </div>
-        </Section>
       </aside>
     </div>
   )
+}
+
+function ReviewBadge({ status, label }) {
+  if (!status) return <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-500">Sin seguimiento</span>
+  const tones = {
+    pendiente: 'bg-slate-100 text-slate-700 border-slate-200',
+    bajo_observacion: 'bg-zinc-200 text-zinc-900 border-zinc-300',
+    documentacion_solicitada: 'bg-blue-100 text-blue-800 border-blue-200',
+    derivado_analista: 'bg-violet-100 text-violet-800 border-violet-200',
+    revisado_sin_alerta: 'bg-emerald-100 text-emerald-800 border-emerald-200'
+  }
+  return <span className={`rounded-full border px-3 py-1 text-xs font-bold ${tones[status] || tones.pendiente}`}>{label}</span>
 }
 
 function labelForStatus(status) {

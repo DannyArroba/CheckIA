@@ -10,7 +10,13 @@ from backend.src.explainability.explain_score import explain_claim, risk_level
 from backend.src.features.build_features import build_claim_contexts, build_model_features
 from backend.src.ingestion.load_data import load_all_data
 from backend.src.models.fraud_model import FraudRiskModel
-from backend.src.services.database_service import save_agent_message, sync_risk_results, sync_source_tables
+from backend.src.services.database_service import (
+    get_latest_review_actions,
+    review_actions_summary,
+    save_agent_message,
+    sync_risk_results,
+    sync_source_tables,
+)
 
 
 @lru_cache(maxsize=1)
@@ -41,14 +47,39 @@ def _clean_record(record: dict) -> dict:
     return record
 
 
+def _review_label(status: str | None) -> str:
+    labels = {
+        "pendiente": "Pendiente",
+        "bajo_observacion": "Bajo observación",
+        "documentacion_solicitada": "Documentación solicitada",
+        "revisado_sin_alerta": "Revisado sin alerta adicional",
+        "derivado_analista": "Derivado a analista",
+    }
+    return labels.get(status or "", "Sin seguimiento")
+
+
+def _latest_reviews_for(claim_ids: list[str]) -> dict[str, dict]:
+    try:
+        return get_latest_review_actions(claim_ids)
+    except Exception:
+        return {}
+
+
 def list_claims() -> list[dict]:
     df = get_claims_dataset().sort_values("risk_score", ascending=False)
+    latest_reviews = _latest_reviews_for(df["claim_id"].tolist())
     columns = [
         "claim_id", "anonymous_customer", "line", "coverage", "city", "provider_name",
         "claim_amount", "risk_score", "risk_level", "risk_color", "recommended_action",
         "claim_date", "report_date",
     ]
-    return [_clean_record(row) for row in df[columns].to_dict(orient="records")]
+    records = []
+    for row in df[columns].to_dict(orient="records"):
+        review = latest_reviews.get(row["claim_id"])
+        row["review_status"] = review["status"] if review else None
+        row["review_label"] = _review_label(row["review_status"])
+        records.append(_clean_record(row))
+    return records
 
 
 def get_claim(claim_id: str) -> dict | None:
@@ -56,7 +87,12 @@ def get_claim(claim_id: str) -> dict | None:
     match = df[df["claim_id"] == claim_id]
     if match.empty:
         return None
-    return _clean_record(match.iloc[0].to_dict())
+    record = match.iloc[0].to_dict()
+    review = _latest_reviews_for([claim_id]).get(claim_id)
+    record["review_status"] = review["status"] if review else None
+    record["review_label"] = _review_label(record["review_status"])
+    record["review_note"] = review.get("note") if review else None
+    return _clean_record(record)
 
 
 def dashboard_summary() -> dict:
@@ -134,10 +170,17 @@ def executive_report() -> dict:
 
 def ask_agent(message: str, conversation_id: int | None = None) -> dict:
     conversation_id = save_agent_message("usuario", message, "usuario", conversation_id)
-    response = ClaimsAgent(get_claims_dataset()).answer(message)
+    response = ClaimsAgent(get_claims_dataset(), _review_context()).answer(message)
     save_agent_message("agente", response["answer"], response.get("provider", "reglas"), conversation_id)
     response["conversation_id"] = conversation_id
     return response
+
+
+def _review_context() -> list[dict]:
+    try:
+        return review_actions_summary()
+    except Exception:
+        return []
 
 
 def agent_status() -> dict:

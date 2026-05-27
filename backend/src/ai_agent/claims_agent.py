@@ -5,15 +5,28 @@ import pandas as pd
 from backend.src.ai_agent.ollama_client import OllamaClient
 
 
+REVIEW_LABELS = {
+    "pendiente": "Pendiente",
+    "bajo_observacion": "Bajo observación",
+    "documentacion_solicitada": "Documentación solicitada",
+    "revisado_sin_alerta": "Revisado sin alerta adicional",
+    "derivado_analista": "Derivado a analista",
+}
+
+
 class ClaimsAgent:
-    def __init__(self, claims: pd.DataFrame) -> None:
+    def __init__(self, claims: pd.DataFrame, review_context: list[dict] | None = None) -> None:
         self.claims = claims
+        self.review_context = review_context or []
         self.ollama = OllamaClient()
 
     def answer(self, question: str) -> dict:
         q = question.lower().strip()
         if not q:
             return self._response("Escribe una pregunta sobre los siniestros cargados para ayudarte con datos del sistema.")
+
+        if any(term in q for term in ["seguimiento", "observacion", "observación", "proceso", "estado", "derivado"]):
+            return self._response(self._review_summary(), self._review_claim_ids(), "reglas")
 
         if "10" in q and "mayor riesgo" in q:
             top = self.claims.nlargest(10, "risk_score")
@@ -66,7 +79,7 @@ class ClaimsAgent:
             return self._response(safe_answer, self._extract_related_claims(safe_answer), "ollama")
 
         return self._response(
-            "Puedo responder con base en los siniestros cargados. Prueba con proveedores con alertas, casos de mayor riesgo, documentos faltantes, montos atípicos o resumen ejecutivo. Ollama no respondió a tiempo, así que mantuve una respuesta segura del sistema.",
+            "Puedo responder con base en los siniestros cargados. Prueba con proveedores con alertas, casos de mayor riesgo, documentos faltantes, seguimientos humanos, montos atípicos o resumen ejecutivo. Ollama no respondió a tiempo, así que mantuve una respuesta segura del sistema.",
             provider="reglas",
         )
 
@@ -82,6 +95,27 @@ class ClaimsAgent:
             f"Hay {high} casos de riesgo alto y {medium} de riesgo medio que requieren revisión humana priorizada. "
             f"El proveedor con mayor score promedio es {provider_text}. "
             "La herramienta no acusa fraude ni decide rechazos; organiza señales para el analista."
+        )
+
+    def _review_summary(self) -> str:
+        if not self.review_context:
+            return "No hay casos con seguimiento humano registrado por el momento."
+
+        counts: dict[str, int] = {}
+        for item in self.review_context:
+            label = REVIEW_LABELS.get(item.get("status"), item.get("status", "Sin estado"))
+            counts[label] = counts.get(label, 0) + 1
+
+        totals = ", ".join([f"{label}: {count}" for label, count in counts.items()])
+        lines = [
+            f"{item['claim_id']}: {REVIEW_LABELS.get(item.get('status'), item.get('status'))}"
+            + (f" - {item['note']}" if item.get("note") else "")
+            for item in self.review_context[:8]
+        ]
+        return (
+            "Seguimiento humano registrado en MySQL:\n"
+            f"Resumen por estado: {totals}.\n"
+            "Casos recientes:\n" + "\n".join(lines)
         )
 
     def _patterns_summary(self) -> str:
@@ -113,12 +147,13 @@ class ClaimsAgent:
             ).sort_values(["alertas", "score_promedio"], ascending=False).head(6)
             providers = "; ".join([f"{idx}: {int(row.alertas)} alertas, score {row.score_promedio:.1f}" for idx, row in ranking.iterrows()])
             focus = df.nlargest(4, "risk_score")
-            return f"{self.executive_summary()}\nRanking proveedores: {providers}\nCasos principales:\n{self._claims_lines(focus)}"
+            return f"{self.executive_summary()}\nRanking proveedores: {providers}\n{self._compact_review_context()}\nCasos principales:\n{self._claims_lines(focus)}"
         else:
             focus = df.nlargest(4, "risk_score")
 
         return (
             f"{self._short_summary()}\n"
+            f"{self._compact_review_context()}\n"
             f"Casos relevantes:\n{self._claims_lines(focus)}"
         )
 
@@ -126,6 +161,12 @@ class ClaimsAgent:
         high = int((self.claims["risk_level"] == "Alto").sum())
         medium = int((self.claims["risk_level"] == "Medio").sum())
         return f"Dataset: {len(self.claims)} siniestros sintéticos; {high} alto riesgo; {medium} riesgo medio."
+
+    def _compact_review_context(self) -> str:
+        if not self.review_context:
+            return "Seguimiento humano: sin registros."
+        lines = [f"{item['claim_id']} estado {item['status']}" for item in self.review_context[:5]]
+        return "Seguimiento humano: " + "; ".join(lines)
 
     @staticmethod
     def _claims_lines(df: pd.DataFrame) -> str:
@@ -137,6 +178,9 @@ class ClaimsAgent:
                 f"monto USD {row.claim_amount:,.0f} | score {int(row.risk_score)} {row.risk_level} | señales: {rule_names}"
             )
         return "\n".join(lines)
+
+    def _review_claim_ids(self) -> list[str]:
+        return [item["claim_id"] for item in self.review_context if item.get("claim_id")]
 
     def _extract_related_claims(self, text: str) -> list[str]:
         ids = set(self.claims["claim_id"].tolist())

@@ -116,7 +116,6 @@ def sync_source_tables() -> dict:
             cursor.execute("DELETE FROM claim_rule_results")
             cursor.execute("DELETE FROM claim_risk_results")
             cursor.execute("DELETE FROM claim_documents")
-            cursor.execute("DELETE FROM claim_review_actions")
             cursor.execute("DELETE FROM claims")
             cursor.execute("DELETE FROM policies")
             cursor.execute("DELETE FROM customers")
@@ -436,5 +435,54 @@ def get_claim_review_actions(claim_id: str) -> list[dict]:
                 ORDER BY created_at DESC, review_id DESC
                 """,
                 (claim_id,),
+            )
+            return cursor.fetchall()
+
+
+def get_latest_review_actions(claim_ids: list[str] | None = None) -> dict[str, dict]:
+    ensure_runtime_schema()
+    params: tuple = ()
+    filter_sql = ""
+    if claim_ids:
+        placeholders = ", ".join(["%s"] * len(claim_ids))
+        filter_sql = f"WHERE claim_id IN ({placeholders})"
+        params = tuple(claim_ids)
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT a.review_id, a.claim_id, a.status, a.note, a.created_at
+                FROM claim_review_actions a
+                INNER JOIN (
+                  SELECT claim_id, MAX(review_id) AS review_id
+                  FROM claim_review_actions
+                  {filter_sql}
+                  GROUP BY claim_id
+                ) latest ON latest.review_id = a.review_id
+                ORDER BY a.created_at DESC, a.review_id DESC
+                """,
+                params,
+            )
+            return {row["claim_id"]: row for row in cursor.fetchall()}
+
+
+def review_actions_summary(limit: int = 12) -> list[dict]:
+    ensure_runtime_schema()
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT a.review_id, a.claim_id, a.status, a.note, a.created_at
+                FROM claim_review_actions a
+                INNER JOIN (
+                  SELECT claim_id, MAX(review_id) AS review_id
+                  FROM claim_review_actions
+                  GROUP BY claim_id
+                ) latest ON latest.review_id = a.review_id
+                ORDER BY a.created_at DESC, a.review_id DESC
+                LIMIT %s
+                """,
+                (limit,),
             )
             return cursor.fetchall()
