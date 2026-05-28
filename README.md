@@ -74,7 +74,7 @@ Variables disponibles:
 OLLAMA_ENABLED=true
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=gemma2:2b
-OLLAMA_TIMEOUT_SECONDS=18
+OLLAMA_TIMEOUT_SECONDS=25
 ```
 
 Modelo local educado para CheckIA:

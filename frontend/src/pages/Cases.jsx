@@ -13,8 +13,12 @@ export default function Cases() {
   const [line, setLine] = useState('Todos')
 
   useEffect(() => {
-    claimsApi.claims().then(setClaims).catch(() => setClaims([]))
+    loadClaims()
   }, [])
+
+  async function loadClaims() {
+    claimsApi.claims().then(setClaims).catch(() => setClaims([]))
+  }
 
   const lines = useMemo(() => ['Todos', ...new Set(claims.map((claim) => claim.line))], [claims])
   const filtered = claims.filter((claim) => {
@@ -31,7 +35,7 @@ export default function Cases() {
 
   return (
     <div className="space-y-5">
-      <UploadDataset />
+      <UploadDataset onUploaded={loadClaims} />
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
         <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px]">
           <label className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-3">

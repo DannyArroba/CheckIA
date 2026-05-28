@@ -33,3 +33,15 @@ button {
     font-size: 11px;
   }
 }
+
+@keyframes loadingSlide {
+  0% {
+    transform: translateX(-110%);
+  }
+  50% {
+    transform: translateX(60%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}

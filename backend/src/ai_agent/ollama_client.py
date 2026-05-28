@@ -14,11 +14,11 @@ class OllamaClient:
     def __init__(self) -> None:
         self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.model = os.getenv("OLLAMA_MODEL", "gemma2:2b")
-        self.timeout = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "18"))
+        self.timeout = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "25"))
         self.enabled = os.getenv("OLLAMA_ENABLED", "true").lower() == "true"
         self.system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
 
-    def generate(self, prompt: str) -> str | None:
+    def generate(self, prompt: str, num_predict: int | None = None, timeout: float | None = None) -> str | None:
         if not self.enabled:
             return None
 
@@ -28,11 +28,11 @@ class OllamaClient:
             "stream": False,
             "keep_alive": "10m",
             "options": {
-                "temperature": 0.2,
-                "top_p": 0.8,
+                "temperature": 0.45,
+                "top_p": 0.9,
                 "num_ctx": 1024,
-                "num_predict": 90,
-                "repeat_penalty": 1.15,
+                "num_predict": num_predict or 150,
+                "repeat_penalty": 1.08,
             },
         }
         request = urllib.request.Request(
@@ -43,7 +43,7 @@ class OllamaClient:
         )
 
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=timeout or self.timeout) as response:
                 body = json.loads(response.read().decode("utf-8"))
                 return str(body.get("response", "")).strip() or None
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):

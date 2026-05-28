@@ -11,6 +11,12 @@ from backend.src.services.claims_service import get_claims_dataset
 
 
 DOC_TYPES = ["formulario de reclamo", "cedula", "fotos del siniestro", "factura/proforma", "informe tecnico"]
+REQUIRED_COLUMNS = {
+    "claim_id", "policy_id", "customer_id", "anonymous_customer", "provider_id",
+    "line", "coverage", "city", "claim_date", "report_date", "claim_amount", "narrative",
+}
+OPTIONAL_COLUMNS = {"vehicle_id", "recent_customer_change"}
+ALLOWED_LINES = {"Vehiculos", "Salud", "Hogar", "Vida", "Empresarial"}
 NARRATIVES = [
     "Accidente con tercero identificado y soporte fotografico completo.",
     "Reporte de robo en parqueadero residencial durante la noche.",
@@ -104,13 +110,25 @@ def _read_uploaded_csv(file_path: Path) -> pd.DataFrame:
 def append_uploaded_claims(file_path: Path) -> dict:
     incoming = _read_uploaded_csv(file_path)
     incoming.columns = [str(column).strip().replace("\ufeff", "") for column in incoming.columns]
-    required = {
-        "claim_id", "policy_id", "customer_id", "anonymous_customer", "provider_id",
-        "line", "coverage", "city", "claim_date", "report_date", "claim_amount", "narrative",
-    }
-    missing = sorted(required - set(incoming.columns))
+    missing = sorted(REQUIRED_COLUMNS - set(incoming.columns))
     if missing:
-        return {"accepted": False, "missing_columns": missing}
+        return {
+            "accepted": False,
+            "reason": "El archivo no parece corresponder a siniestros de CheckIA.",
+            "missing_columns": missing,
+            "required_columns": sorted(REQUIRED_COLUMNS),
+            "detected_columns": list(incoming.columns),
+        }
+
+    validation_errors = _validate_claim_rows(incoming)
+    if validation_errors:
+        return {
+            "accepted": False,
+            "reason": "El archivo tiene columnas correctas, pero algunos valores no son válidos para el modelo.",
+            "validation_errors": validation_errors,
+            "required_columns": sorted(REQUIRED_COLUMNS),
+            "detected_columns": list(incoming.columns),
+        }
 
     claims_path = DATA_DIR / "synthetic_claims.csv"
     existing = pd.read_csv(claims_path)
@@ -137,3 +155,39 @@ def append_uploaded_claims(file_path: Path) -> dict:
     get_claims_dataset.cache_clear()
 
     return {"accepted": True, "inserted": int(len(incoming)), "total_claims": int(len(get_claims_dataset()))}
+
+
+def _validate_claim_rows(frame: pd.DataFrame) -> list[str]:
+    errors: list[str] = []
+    if frame.empty:
+        return ["El archivo no contiene filas de siniestros."]
+
+    sample = frame.head(50).copy()
+    if not sample["claim_id"].astype(str).str.match(r"^CLM-\d{4,}$").all():
+        errors.append("La columna claim_id debe usar formato CLM-0001.")
+    if not sample["policy_id"].astype(str).str.match(r"^POL-\d{4,}$").all():
+        errors.append("La columna policy_id debe usar formato POL-0001.")
+    if not sample["customer_id"].astype(str).str.match(r"^CUST-\d{3,}$").all():
+        errors.append("La columna customer_id debe usar formato CUST-001.")
+    if not sample["provider_id"].astype(str).str.match(r"^PRV-\d{3,}$").all():
+        errors.append("La columna provider_id debe usar formato PRV-001.")
+
+    parsed_claim_dates = pd.to_datetime(sample["claim_date"], errors="coerce")
+    parsed_report_dates = pd.to_datetime(sample["report_date"], errors="coerce")
+    if parsed_claim_dates.isna().any() or parsed_report_dates.isna().any():
+        errors.append("Las columnas claim_date y report_date deben tener fechas válidas, por ejemplo 2026-03-15.")
+    elif (parsed_report_dates < parsed_claim_dates).any():
+        errors.append("report_date no puede ser anterior a claim_date.")
+
+    amounts = pd.to_numeric(sample["claim_amount"], errors="coerce")
+    if amounts.isna().any() or (amounts <= 0).any():
+        errors.append("claim_amount debe ser numérico y mayor que cero.")
+
+    invalid_lines = sorted(set(sample["line"].dropna().astype(str)) - ALLOWED_LINES)
+    if invalid_lines:
+        errors.append(f"line contiene ramos no reconocidos: {', '.join(invalid_lines)}.")
+
+    if sample["narrative"].fillna("").astype(str).str.len().lt(12).any():
+        errors.append("narrative debe contener una descripción del reclamo con suficiente contexto.")
+
+    return errors

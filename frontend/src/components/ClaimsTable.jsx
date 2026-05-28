@@ -1,37 +1,112 @@
+import { Search, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import RiskBadge from './RiskBadge.jsx'
 
+const columns = [
+  { key: 'claim_id', label: 'ID siniestro', className: 'whitespace-nowrap', render: (claim) => <span className="font-bold text-electric">{claim.claim_id}</span> },
+  { key: 'anonymous_customer', label: 'Asegurado', className: 'whitespace-nowrap', render: (claim) => (
+    <div className="flex items-center gap-2">
+      <span>{claim.anonymous_customer}</span>
+      <ReviewBadge status={claim.review_status} label={claim.review_label} compact />
+    </div>
+  ) },
+  { key: 'line', label: 'Ramo', className: 'whitespace-nowrap' },
+  { key: 'coverage', label: 'Cobertura', className: 'min-w-44 text-slate-600' },
+  { key: 'city', label: 'Ciudad', className: 'whitespace-nowrap' },
+  { key: 'provider_name', label: 'Proveedor', className: 'min-w-48' },
+  { key: 'claim_amount', label: 'Monto', className: 'whitespace-nowrap font-semibold', value: (claim) => String(claim.claim_amount), render: (claim) => `$${Number(claim.claim_amount).toLocaleString()}` },
+  { key: 'risk_score', label: 'Score', className: 'whitespace-nowrap font-bold', value: (claim) => String(claim.risk_score) },
+  { key: 'risk_level', label: 'Riesgo', className: 'whitespace-nowrap', render: (claim) => <RiskBadge level={claim.risk_level} /> },
+  { key: 'recommended_action', label: 'Acción', className: 'min-w-52 text-slate-600' }
+]
+
 export default function ClaimsTable({ claims, onSelect }) {
+  const [openFilter, setOpenFilter] = useState(null)
+  const [filters, setFilters] = useState({})
+
+  const filteredClaims = useMemo(() => {
+    return claims.filter((claim) => {
+      return columns.every((column) => {
+        const filter = (filters[column.key] || '').trim().toLowerCase()
+        if (!filter) return true
+        const raw = column.value ? column.value(claim) : claim[column.key]
+        return String(raw ?? '').toLowerCase().includes(filter)
+      })
+    })
+  }, [claims, filters])
+
+  function updateFilter(key, value) {
+    setFilters((current) => ({ ...current, [key]: value }))
+  }
+
+  function clearFilter(key) {
+    setFilters((current) => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+  }
+
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        Mostrando <strong>{filteredClaims.length}</strong> de <strong>{claims.length}</strong> siniestros
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
-              {['ID siniestro', 'Asegurado', 'Ramo', 'Cobertura', 'Ciudad', 'Proveedor', 'Monto', 'Score', 'Riesgo', 'Acción'].map((header) => (
-                <th key={header} className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">{header}</th>
+              {columns.map((column) => (
+                <th key={column.key} className="px-4 py-3 text-left align-top text-xs font-bold uppercase tracking-wide text-slate-500">
+                  <div className="flex min-w-28 items-center gap-2">
+                    <span>{column.label}</span>
+                    <button
+                      type="button"
+                      onClick={() => setOpenFilter(openFilter === column.key ? null : column.key)}
+                      className={`grid h-6 w-6 place-items-center rounded border ${filters[column.key] ? 'border-electric bg-blue-50 text-electric' : 'border-slate-200 bg-white text-slate-400 hover:text-electric'}`}
+                      title={`Buscar en ${column.label}`}
+                    >
+                      <Search size={13} />
+                    </button>
+                  </div>
+                  {openFilter === column.key && (
+                    <div className="mt-2 flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2">
+                      <input
+                        autoFocus
+                        value={filters[column.key] || ''}
+                        onChange={(event) => updateFilter(column.key, event.target.value)}
+                        onClick={(event) => event.stopPropagation()}
+                        className="w-36 bg-transparent text-xs font-medium normal-case tracking-normal text-slate-700 outline-none"
+                        placeholder={`Buscar ${column.label.toLowerCase()}`}
+                      />
+                      {!!filters[column.key] && (
+                        <button type="button" onClick={() => clearFilter(column.key)} className="text-slate-400 hover:text-red-600" title="Limpiar">
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {claims.map((claim) => (
+            {filteredClaims.map((claim) => (
               <tr key={claim.claim_id} className="cursor-pointer transition hover:bg-blue-50/60" onClick={() => onSelect(claim.claim_id)}>
-                <td className="whitespace-nowrap px-4 py-3 text-sm font-bold text-electric">{claim.claim_id}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span>{claim.anonymous_customer}</span>
-                    <ReviewBadge status={claim.review_status} label={claim.review_label} compact />
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm">{claim.line}</td>
-                <td className="min-w-44 px-4 py-3 text-sm text-slate-600">{claim.coverage}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm">{claim.city}</td>
-                <td className="min-w-48 px-4 py-3 text-sm">{claim.provider_name}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold">${Number(claim.claim_amount).toLocaleString()}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm font-bold">{claim.risk_score}</td>
-                <td className="whitespace-nowrap px-4 py-3"><RiskBadge level={claim.risk_level} /></td>
-                <td className="min-w-52 px-4 py-3 text-sm text-slate-600">{claim.recommended_action}</td>
+                {columns.map((column) => (
+                  <td key={column.key} className={`px-4 py-3 text-sm ${column.className || ''}`}>
+                    {column.render ? column.render(claim) : claim[column.key]}
+                  </td>
+                ))}
               </tr>
             ))}
+            {filteredClaims.length === 0 && (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-slate-500">
+                  No hay siniestros que coincidan con los filtros por columna.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

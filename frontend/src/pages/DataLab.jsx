@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Database, FilePlus2, RefreshCw, UploadCloud } from 'lucide-react'
 import { claimsApi } from '../api/claimsApi.js'
 import KpiCard from '../components/KpiCard.jsx'
+import CsvValidationModal, { buildUploadErrorModal } from '../components/CsvValidationModal.jsx'
 
 export default function DataLab() {
   const [dbStatus, setDbStatus] = useState(null)
@@ -10,6 +11,7 @@ export default function DataLab() {
   const [riskMix, setRiskMix] = useState('balanceado')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [modal, setModal] = useState(null)
 
   async function refresh() {
     const [db, dashboard] = await Promise.all([
@@ -32,7 +34,11 @@ export default function DataLab() {
       setMessage(`Sincronización lista: ${result.source.claims} siniestros y ${result.risk.risk_results} scores guardados.`)
       await refresh()
     } catch {
-      setMessage('No se pudo sincronizar. Revisa que XAMPP/MySQL esté activo y que exista la base checkia.')
+      setModal({
+        title: 'No se pudo sincronizar MySQL',
+        body: 'Revisa que XAMPP/MySQL esté activo y que exista la base checkia.',
+        type: 'error'
+      })
     } finally {
       setBusy(false)
     }
@@ -49,7 +55,11 @@ export default function DataLab() {
       link.click()
       setMessage(`CSV creado con ${result.created} siniestros. Descárgalo y luego cárgalo manualmente desde tus archivos para actualizar el análisis.`)
     } catch {
-      setMessage('No se pudo generar el dataset adicional.')
+      setModal({
+        title: 'No se pudo generar el CSV',
+        body: 'Intenta nuevamente con una cantidad entre 1 y 100 siniestros.',
+        type: 'error'
+      })
     } finally {
       setBusy(false)
     }
@@ -57,15 +67,17 @@ export default function DataLab() {
 
   async function upload(event) {
     const file = event.target.files?.[0]
+    event.target.value = ''
     if (!file) return
     setBusy(true)
-    setMessage('Cargando CSV y recalculando score...')
+    setMessage('Validando estructura del CSV...')
     try {
       const result = await claimsApi.upload(file)
       setMessage(`${result.message} Insertados: ${result.result?.inserted ?? 0}.`)
       await refresh()
-    } catch {
-      setMessage('No se pudo cargar el CSV. Revisa columnas requeridas y formato.')
+    } catch (error) {
+      setMessage('')
+      setModal(buildUploadErrorModal(error))
     } finally {
       setBusy(false)
     }
@@ -123,6 +135,7 @@ export default function DataLab() {
       </section>
 
       {message && <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-950">{message}</div>}
+      <CsvValidationModal modal={modal} onClose={() => setModal(null)} />
     </div>
   )
 }

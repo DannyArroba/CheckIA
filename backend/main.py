@@ -209,6 +209,8 @@ async def upload_dataset(file: UploadFile = File(...)) -> dict:
     path = upload_dir / file.filename
     path.write_bytes(content)
     result = append_uploaded_claims(path)
+    if not result.get("accepted", False):
+        raise HTTPException(status_code=400, detail=result)
     return {
         "filename": file.filename,
         "size_bytes": len(content),

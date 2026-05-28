@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime
 from functools import lru_cache
+import re
 
 import pandas as pd
 
@@ -170,10 +172,110 @@ def executive_report() -> dict:
 
 def ask_agent(message: str, conversation_id: int | None = None) -> dict:
     conversation_id = save_agent_message("usuario", message, "usuario", conversation_id)
+    quick_response = _light_ollama_response(message)
+    if quick_response:
+        save_agent_message("agente", quick_response["answer"], quick_response["provider"], conversation_id)
+        quick_response["conversation_id"] = conversation_id
+        return quick_response
+
     response = ClaimsAgent(get_claims_dataset(), _review_context()).answer(message)
     save_agent_message("agente", response["answer"], response.get("provider", "reglas"), conversation_id)
     response["conversation_id"] = conversation_id
     return response
+
+
+def _light_ollama_response(message: str) -> dict | None:
+    text = message.strip().lower()
+    normalized = re.sub(r"[¿?¡!.,;:]+", "", text)
+    simple_greetings = {
+        "hola", "buenas", "hey", "holaa", "hello", "hi", "buenos dias", "buenos días",
+        "buenas tardes", "buenas noches", "que tal", "qué tal"
+    }
+    wellbeing = {
+        "como estas", "cómo estás", "como esta", "cómo está", "como vas", "cómo vas",
+        "que haces", "qué haces", "todo bien", "como te va", "cómo te va"
+    }
+    thanks = {"gracias", "ok", "listo", "vale", "perfecto", "dale", "entendido", "ya"}
+
+    if normalized in simple_greetings:
+        return _ask_ollama_light(
+            message,
+            fallback="Hola. ¿Qué quieres revisar: casos críticos, proveedores, documentos o seguimientos?",
+            suggestions=["Top 10 casos", "Proveedores con alertas", "Resumen ejecutivo"],
+        )
+    if normalized in wellbeing:
+        return _ask_ollama_light(
+            message,
+            fallback="Estoy bien, listo para ayudarte con CheckIA. Si quieres, revisamos casos críticos o un resumen rápido.",
+            suggestions=["Top 10 casos", "Resumen ejecutivo"],
+        )
+    if normalized in thanks:
+        return _ask_ollama_light(
+            message,
+            fallback="Listo. Cuando quieras, seguimos revisando siniestros.",
+            suggestions=["Top 10 casos", "Seguimiento humano"],
+        )
+    if normalized in {"que puedes hacer", "qué puedes hacer", "ayuda", "help", "ayudame", "ayúdame"}:
+        return _ask_ollama_light(
+            message,
+            fallback="Puedo resumir riesgos, listar casos prioritarios, revisar proveedores, documentos, ciudades y seguimientos humanos.",
+            suggestions=["Top 10 casos", "Documentos críticos", "Seguimiento humano"],
+        )
+    if not _has_claims_intent(normalized):
+        return _ask_ollama_light(
+            message,
+            fallback="Sí, puedo ayudarte con eso. Si quieres, también puedo revisar información de siniestros.",
+            suggestions=["Top 10 casos", "Resumen ejecutivo"],
+        )
+    return None
+
+
+def _ask_ollama_light(message: str, fallback: str, suggestions: list[str]) -> dict:
+    today = datetime.now().strftime("%Y-%m-%d")
+    prompt = (
+        "El usuario hizo una interacción simple dentro de CheckIA. "
+        "Responde con tono amable, natural y muy breve. "
+        "No analices datos de siniestros, no menciones casos específicos y no inventes cifras. "
+        f"Fecha actual del sistema: {today}. Si pregunta por la fecha o el día, responde usando esa fecha. "
+        "No uses emojis. Máximo 25 palabras.\n\n"
+        f"Mensaje del usuario: {message}"
+    )
+    answer = _clean_light_answer(_strip_symbols(OllamaClient().generate(prompt, num_predict=45, timeout=10) or fallback))
+    return {
+        "answer": answer,
+        "related_claims": [],
+        "provider": "ollama ligero",
+        "suggestions": suggestions,
+        "disclaimer": "",
+    }
+
+
+def _strip_symbols(text: str) -> str:
+    return re.sub(r"[\U00010000-\U0010ffff]", "", text).strip()
+
+
+def _clean_light_answer(text: str) -> str:
+    blocked = [
+        "CheckIA no puede tomar decisiones",
+        "no puede tomar decisiones legales",
+        "Recuerda que CheckIA",
+        "Requiere análisis humano",
+    ]
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    kept = [line for line in lines if not any(phrase.lower() in line.lower() for phrase in blocked)]
+    return " ".join(kept).strip() or text.strip()
+
+
+def _has_claims_intent(text: str) -> bool:
+    terms = [
+        "caso", "casos", "siniestro", "siniestros", "riesgo", "riesgos", "fraude",
+        "proveedor", "proveedores", "documento", "documentos", "monto", "montos",
+        "ciudad", "ciudades", "seguimiento", "observacion", "observación", "estado",
+        "poliza", "póliza", "reporte", "score", "alerta", "alertas", "resumen",
+        "dashboard", "rojo", "amarillo", "verde", "top", "revisar", "revisión",
+        "revision", "asegurado", "aseguradora", "cobertura", "claim", "clm-"
+    ]
+    return any(term in text for term in terms)
 
 
 def _review_context() -> list[dict]:

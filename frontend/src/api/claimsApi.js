@@ -6,7 +6,14 @@ async function request(path, options) {
     ...options
   })
   if (!response.ok) {
-    throw new Error(`Error API ${response.status}`)
+    const error = new Error(`Error API ${response.status}`)
+    try {
+      const payload = await response.json()
+      error.detail = payload.detail
+    } catch {
+      error.detail = null
+    }
+    throw error
   }
   return response.json()
 }
@@ -38,7 +45,16 @@ export const claimsApi = {
     const form = new FormData()
     form.append('file', file)
     const response = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: form })
-    if (!response.ok) throw new Error(`Error API ${response.status}`)
+    if (!response.ok) {
+      const error = new Error(`Error API ${response.status}`)
+      try {
+        const payload = await response.json()
+        error.detail = payload.detail
+      } catch {
+        error.detail = null
+      }
+      throw error
+    }
     return response.json()
   }
 }
