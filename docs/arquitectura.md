@@ -4,9 +4,11 @@ CheckIA usa una arquitectura simple para demo local:
 
 - Frontend React/Vite consume endpoints REST.
 - Backend FastAPI carga CSV sintéticos desde `backend/data`.
+- Enfoque híbrido: ML + NLP + agente de IA para consultas en lenguaje natural.
 - La capa de features agrega contexto de póliza, proveedor, documentos y similitud textual.
 - El motor de reglas produce señales explicables.
 - El modelo IA calcula riesgo complementario con RandomForestClassifier e IsolationForest.
+- El agente IA recibe análisis predictivo previo y redacta respuestas con Ollama local.
 - El servicio consolida score, nivel de riesgo, explicación y recomendaciones.
 - MySQL/MariaDB en XAMPP funciona como persistencia opcional para datos, resultados IA, reglas activadas e historial del agente.
 
@@ -17,10 +19,12 @@ Flujo:
 3. Cálculo TF-IDF y similitud de coseno.
 4. Evaluación de reglas.
 5. Predicción IA/anomalías.
-6. Score final 70/20/10.
-7. Exposición por API.
-8. Sincronización opcional con MySQL.
-9. Visualización en dashboard, casos, agente, datos y reportes.
+6. Preanálisis predictivo para consultas del agente.
+7. Redacción en lenguaje natural con Ollama local.
+8. Score final 70/20/10.
+9. Exposición por API.
+10. Sincronización opcional con MySQL.
+11. Visualización en dashboard, casos, agente, datos y reportes.
 
 La arquitectura prioriza trazabilidad, claridad para jurado de hackathon y ejecución local sin credenciales.
 

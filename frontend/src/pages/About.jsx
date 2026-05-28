@@ -53,6 +53,9 @@ export default function About() {
           CheckIA es un prototipo funcional para apoyar a analistas de siniestros. Cruza datos sintéticos de reclamos, pólizas, asegurados,
           proveedores, vehículos y documentos para detectar posibles señales de riesgo y priorizar revisión humana.
         </p>
+        <p className="mt-3 max-w-4xl leading-7 text-slate-700">
+          Usa un enfoque híbrido: ML + NLP + agente de IA para consultas en lenguaje natural. El backend calcula el riesgo y el agente redacta respuestas sobre datos ya procesados.
+        </p>
         <p className="mt-4 rounded-lg bg-amber-50 p-4 text-sm font-semibold text-amber-900">
           Esta alerta no constituye una acusación de fraude. El sistema no rechaza siniestros, no toma decisiones legales y no sustituye al analista humano.
         </p>
@@ -83,7 +86,7 @@ export default function About() {
           </p>
           <div className="mt-4 space-y-3 text-sm text-slate-700">
             <Row label="Reglas explicables" value="70%" />
-            <Row label="Modelo IA/anomalías" value="20%" />
+            <Row label="ML/anomalías" value="20%" />
             <Row label="NLP/similitud textual" value="10%" />
           </div>
           <div className="mt-5 grid gap-2 text-sm">

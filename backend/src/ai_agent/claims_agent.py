@@ -27,6 +27,14 @@ class ClaimsAgent:
         style = self._response_style(question)
         if not q:
             return self._response("Claro. Pregúntame por casos críticos, proveedores, documentos o seguimientos.", suggestions=self._suggestions_for(q))
+        specific_claim = self._specific_claim_response(q)
+        if specific_claim:
+            return specific_claim
+        latest_cases = self._latest_cases_response(q)
+        if latest_cases:
+            return latest_cases
+        if self._asks_complete_analysis(q):
+            return self._response(self.complete_analysis(), self.claims.nlargest(5, "risk_score")["claim_id"].tolist(), "reglas", self._suggestions_for(q))
         if style == "short" and not self._has_data_intent(q):
             return self._response(self._local_open_answer(q, style), suggestions=self._suggestions_for(q))
 
@@ -100,6 +108,113 @@ class ClaimsAgent:
             f"Proveedor con mayor score promedio: {provider_text}."
         )
 
+    def _specific_claim_response(self, q: str) -> dict | None:
+        claim_ids = sorted(set(re.findall(r"clm-\d{4,}", q)))
+        if not claim_ids:
+            return None
+        requested = [claim_id.upper() for claim_id in claim_ids]
+        matches = self.claims[self.claims["claim_id"].isin(requested)]
+        if matches.empty:
+            top_ids = ", ".join(self.claims.nlargest(3, "risk_score")["claim_id"].tolist())
+            return self._response(
+                f"No encontré esos IDs en el dataset cargado. IDs reales sugeridos: {top_ids}.",
+                [],
+                "reglas",
+                ["Top 10 casos", "Resumen ejecutivo"],
+            )
+
+        lines = []
+        for row in matches.itertuples():
+            rules = ", ".join([rule["nombre"] for rule in row.rules[:4]]) if row.rules else "sin reglas fuertes registradas"
+            documents = getattr(row, "document_statuses", "sin detalle documental")
+            amount = getattr(row, "claim_amount", None)
+            amount_text = f"USD {amount:,.0f}" if amount is not None else "sin monto disponible"
+            lines.append(
+                f"{row.claim_id}: score {int(row.risk_score)} ({row.risk_level}), ciudad {row.city}, proveedor {row.provider_name}, monto {amount_text}. "
+                f"Señales: {rules}. Documentos: {documents}. Acción recomendada: {row.recommended_action}."
+            )
+        related = matches["claim_id"].tolist()
+        return self._response(
+            "\n".join(lines),
+            related,
+            "reglas",
+            ["Explícame las señales", "Ver documentos", "Resumen ejecutivo"],
+        )
+
+    def _latest_cases_response(self, q: str) -> dict | None:
+        if not re.search(r"\b(ultimos|últimos|recientes|nuevos)\b", q):
+            return None
+        if not re.search(r"\b(caso|casos|siniestro|siniestros)\b", q):
+            return None
+        limit_match = re.search(r"\b(\d{1,2})\b", q)
+        limit = int(limit_match.group(1)) if limit_match else 5
+        limit = max(1, min(limit, 15))
+        df = self.claims.copy()
+        if "claim_date" in df.columns:
+            df["_sort_date"] = pd.to_datetime(df["claim_date"], errors="coerce")
+            df = df.sort_values(["_sort_date", "claim_id"], ascending=[False, False])
+        else:
+            df = df.sort_values("claim_id", ascending=False)
+        latest = df.head(limit)
+        lines = [
+            f"{row.claim_id}: fecha {row.claim_date}, score {int(row.risk_score)} ({row.risk_level}), {row.city}, {row.provider_name}"
+            for row in latest.itertuples()
+        ]
+        return self._response(
+            f"Últimos {len(latest)} casos por fecha de siniestro:\n" + "\n".join(lines),
+            latest["claim_id"].tolist(),
+            "reglas",
+            ["Ver detalle del primero", "Top 10 casos", "Resumen ejecutivo"],
+        )
+
+    def complete_analysis(self) -> str:
+        total = len(self.claims)
+        high = int((self.claims["risk_level"] == "Alto").sum())
+        medium = int((self.claims["risk_level"] == "Medio").sum())
+        amount = float(self.claims["claim_amount"].sum())
+        top_cases = self.claims.nlargest(5, "risk_score")
+        case_lines = []
+        for row in top_cases.itertuples():
+            rules = ", ".join([rule["nombre"] for rule in row.rules[:2]]) if row.rules else "sin reglas fuertes"
+            case_lines.append(
+                f"- {row.claim_id} | score {int(row.risk_score)} | {row.risk_level} | {row.city} | {row.provider_name} | {rules}"
+            )
+
+        provider_ranking = self.claims[self.claims["risk_level"].isin(["Medio", "Alto"])].groupby("provider_name").agg(
+            alertas=("claim_id", "count"),
+            score_promedio=("risk_score", "mean"),
+        ).sort_values(["alertas", "score_promedio"], ascending=False).head(5)
+        provider_lines = [
+            f"- {idx}: {int(row.alertas)} alertas, score promedio {row.score_promedio:.1f}"
+            for idx, row in provider_ranking.iterrows()
+        ]
+
+        city_ranking = self.claims[self.claims["risk_level"] == "Alto"].groupby("city")["claim_id"].count().sort_values(ascending=False).head(5)
+        city_lines = [f"- {idx}: {count} casos altos" for idx, count in city_ranking.items()]
+
+        rules = {}
+        for active_rules in self.claims["rules"]:
+            for rule in active_rules:
+                rules[rule["nombre"]] = rules.get(rule["nombre"], 0) + 1
+        rule_lines = [f"- {name}: {count} casos" for name, count in sorted(rules.items(), key=lambda item: item[1], reverse=True)[:5]]
+
+        missing_docs = self.claims[self.claims["missing_count"] > 0][["claim_id", "missing_count", "document_statuses"]].head(5)
+        doc_lines = [
+            f"- {row.claim_id}: {int(row.missing_count)} documento(s) faltante(s) o a revisar ({row.document_statuses})"
+            for row in missing_docs.itertuples()
+        ]
+
+        return (
+            "Análisis completo:\n"
+            f"Resumen ejecutivo: {total} siniestros analizados, {high} altos, {medium} medios, monto total USD {amount:,.0f}.\n\n"
+            "Casos prioritarios:\n" + ("\n".join(case_lines) or "- No hay casos prioritarios disponibles.") + "\n\n"
+            "Señales principales:\n" + ("\n".join(rule_lines) or "- No hay reglas activadas registradas.") + "\n\n"
+            "Concentración por proveedor:\n" + ("\n".join(provider_lines) or "- No hay concentración relevante en proveedores.") + "\n\n"
+            "Ciudades con riesgo alto:\n" + ("\n".join(city_lines) or "- No hay casos altos por ciudad.") + "\n\n"
+            "Documentación y montos:\n" + ("\n".join(doc_lines) or "- No hay faltantes documentales relevantes en los datos cargados.") + "\n\n"
+            "Próximos pasos: revisar primero los casos de mayor score, validar documentos y contrastar las señales con evidencia del expediente."
+        )
+
     def _review_summary(self, style: str = "normal") -> str:
         if not self.review_context:
             return "Aún no hay casos con seguimiento humano registrado."
@@ -128,23 +243,43 @@ class ClaimsAgent:
         return "Patrones recurrentes:\n" + "\n".join([f"{name}: {count} casos" for name, count in top])
 
     def _answer_with_ollama(self, question: str, style: str) -> str | None:
-        max_words = {"short": 45, "normal": 95, "detailed": 150}[style]
-        style_hint = {
-            "short": "Responde muy breve, en 1 a 3 frases.",
-            "normal": "Responde con un párrafo corto o pocos bullets.",
-            "detailed": "Da más detalle, pero solo con información relevante."
-        }[style]
+        max_words = {"short": 45, "normal": 90, "detailed": 160}[style]
         prompt = (
-            f"Pregunta del analista: {question}\n\n"
-            f"Contexto CheckIA:\n{self._compact_context(question)}\n\n"
-            f"{style_hint} Máximo {max_words} palabras. No agregues temas que el usuario no pidió. "
-            "Sé amable, concreto y coherente. Si mencionas casos, usa IDs CLM exactos."
+            f"Pregunta: {question}\n"
+            f"Datos: {self._compact_context(question, style)}\n"
+            f"Limite: maximo {max_words} palabras."
         )
         return self.ollama.generate(prompt)
 
-    def _compact_context(self, question: str) -> str:
-        focus = self.claims.nlargest(5, "risk_score")
-        return f"{self._short_summary()}\n{self._compact_review_context()}\nCasos relevantes:\n{self._claims_lines(focus)}"
+    def _compact_context(self, question: str, style: str = "normal") -> str:
+        q = question.lower()
+        claim_ids = re.findall(r"clm-\d{4,}", q)
+        if claim_ids:
+            focus = self.claims[self.claims["claim_id"].str.lower().isin(claim_ids)]
+            if focus.empty:
+                focus = self.claims.nlargest(3, "risk_score")
+        elif style == "detailed" or self._asks_complete_analysis(q):
+            focus = self.claims.nlargest(8, "risk_score")
+        else:
+            focus = self.claims.nlargest(3, "risk_score")
+
+        parts = [self._short_summary()]
+        if style == "detailed" or any(term in q for term in ["proveedor", "ciudad", "ranking", "concentra"]):
+            parts.append(self._compact_rankings())
+        if self.review_context and any(term in q for term in ["seguimiento", "estado", "observacion", "observación"]):
+            parts.append(self._compact_review_context())
+        parts.append("Casos: " + self._claims_lines(focus))
+        return " ".join(parts)
+
+    def _compact_rankings(self) -> str:
+        providers = self.claims[self.claims["risk_level"].isin(["Medio", "Alto"])].groupby("provider_name").agg(
+            alertas=("claim_id", "count"),
+            score_promedio=("risk_score", "mean"),
+        ).sort_values(["alertas", "score_promedio"], ascending=False).head(3)
+        provider_text = "; ".join([f"{idx} {int(row.alertas)} alertas score {row.score_promedio:.1f}" for idx, row in providers.iterrows()])
+        cities = self.claims[self.claims["risk_level"] == "Alto"].groupby("city")["claim_id"].count().sort_values(ascending=False).head(3)
+        city_text = "; ".join([f"{idx} {count} altos" for idx, count in cities.items()])
+        return f"Ranking proveedores: {provider_text or 'sin datos'}. Ranking ciudades: {city_text or 'sin datos'}."
 
     def _short_summary(self) -> str:
         high = int((self.claims["risk_level"] == "Alto").sum())
@@ -162,8 +297,8 @@ class ClaimsAgent:
         lines = []
         for row in df.itertuples():
             rule_names = ", ".join([rule["nombre"] for rule in row.rules[:2]]) if row.rules else "sin reglas fuertes"
-            lines.append(f"{row.claim_id} | {row.line} | {row.city} | score {int(row.risk_score)} {row.risk_level} | {rule_names}")
-        return "\n".join(lines)
+            lines.append(f"{row.claim_id}|{row.city}|{row.provider_name}|score {int(row.risk_score)} {row.risk_level}|{rule_names}")
+        return "; ".join(lines)
 
     def _local_open_answer(self, q: str, style: str = "normal") -> str:
         if re.search(r"\b(hola|buenas|hey|qué tal|que tal)\b", q):
@@ -192,6 +327,20 @@ class ClaimsAgent:
             "estado", "póliza", "poliza", "reporte", "score", "alerta", "resumen", "top"
         ]
         return any(term in q for term in terms)
+
+    @staticmethod
+    def _asks_complete_analysis(q: str) -> bool:
+        return any(term in q for term in [
+            "analisis completo",
+            "análisis completo",
+            "analiza a fondo",
+            "revision integral",
+            "revisión integral",
+            "informe completo",
+            "reporte completo",
+            "diagnostico completo",
+            "diagnóstico completo",
+        ])
 
     @staticmethod
     def _asks_review_status(q: str) -> bool:

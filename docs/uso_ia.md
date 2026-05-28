@@ -2,6 +2,8 @@
 
 CheckIA usa IA como soporte de priorización, no como decisor automático.
 
+El enfoque es híbrido: ML + NLP + agente de IA para consultas en lenguaje natural.
+
 ## Modelo supervisado simulado
 
 `RandomForestClassifier` aprende a estimar riesgo a partir de variables como:
@@ -29,12 +31,13 @@ Se usa `TfidfVectorizer` y `cosine_similarity` para detectar narrativas parecida
 
 ## Agente IA
 
-El agente responde preguntas frecuentes usando agregaciones del dataset ya procesado. Para preguntas abiertas puede usar Ollama local con `gemma2:2b`.
+El agente responde consultas en lenguaje natural con Ollama local (`checkia-gemma`). Antes de enviar texto al agente, el backend interpreta la intención, calcula datos reales del dataset y prepara un preanálisis predictivo con score final, reglas, modelo, anomalía, NLP y factores explicables.
 
 La integración está optimizada para reducir latencia:
 
-- Las preguntas rápidas se resuelven con pandas sin llamar al LLM.
-- Las preguntas abiertas envían a Ollama solo un contexto compacto con resumen, patrones y casos principales.
+- Las preguntas simples usan un prompt corto de Ollama.
+- Las consultas de siniestros calculan primero datos con pandas, reglas, ML y NLP.
+- Ollama recibe solo contexto compacto y datos permitidos para redactar sin inventar.
 - Se usa `keep_alive` para mantener el modelo cargado.
 - Se limita `num_ctx` y `num_predict` para evitar respuestas lentas.
 - Si Ollama no responde a tiempo, el sistema entrega una respuesta segura basada en reglas.
@@ -52,6 +55,8 @@ Después se puede configurar `OLLAMA_MODEL=checkia-gemma`.
 Endpoint de estado: `GET /api/agent/status`.
 
 Endpoint de chat: `POST /api/agent/chat`.
+
+Endpoint de verificación del enfoque híbrido: `GET /api/model/hybrid-status`.
 
 Ejemplo PowerShell:
 

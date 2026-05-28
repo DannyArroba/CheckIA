@@ -28,7 +28,7 @@ export default function DataLab() {
 
   async function syncDb() {
     setBusy(true)
-    setMessage('Sincronizando CSV, resultados IA y reglas con MySQL...')
+    setMessage('Sincronizando datos, resultados IA y reglas con MySQL...')
     try {
       const result = await claimsApi.syncDatabase()
       setMessage(`Sincronización lista: ${result.source.claims} siniestros y ${result.risk.risk_results} scores guardados.`)
@@ -87,7 +87,7 @@ export default function DataLab() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
-        <KpiCard title="Total siniestros" value={summary?.total_claims ?? '-'} helper="CSV activo + modelo recalculado" icon={Database} />
+        <KpiCard title="Total siniestros" value={summary?.total_claims ?? '-'} helper="MySQL activo + modelo recalculado" icon={Database} />
         <KpiCard title="Verdes" value={summary?.green_cases ?? '-'} helper="Riesgo bajo" tone="green" />
         <KpiCard title="Amarillos" value={summary?.yellow_cases ?? '-'} helper="Revisión recomendada" tone="yellow" />
         <KpiCard title="Rojos" value={summary?.red_cases ?? '-'} helper="Caso prioritario" tone="red" />

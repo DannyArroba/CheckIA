@@ -4,9 +4,13 @@ import os
 from typing import Any
 
 import pymysql
+from dotenv import load_dotenv
 from pymysql.cursors import DictCursor
 
 from backend.src.ingestion.load_data import load_all_data
+
+
+load_dotenv()
 
 
 def _config() -> dict:
@@ -62,6 +66,131 @@ def database_status() -> dict:
             "database": config["database"],
             "error": str(exc),
         }
+
+
+def source_table_counts() -> dict:
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            counts = {}
+            for table in ["customers", "policies", "providers", "claims", "claim_documents"]:
+                cursor.execute(f"SELECT COUNT(*) AS total FROM {table}")
+                counts[table] = int(cursor.fetchone()["total"])
+            return counts
+
+
+def existing_ids(table: str, column: str) -> set[str]:
+    allowed = {
+        ("claims", "claim_id"),
+        ("policies", "policy_id"),
+        ("customers", "customer_id"),
+        ("providers", "provider_id"),
+    }
+    if (table, column) not in allowed:
+        raise ValueError("Tabla o columna no permitida para consulta de IDs.")
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT {column} AS id FROM {table}")
+            return {str(row["id"]) for row in cursor.fetchall()}
+
+
+def insert_claims_with_documents(claims, documents: list[dict]) -> dict:
+    if claims.empty:
+        return {"inserted": 0, "documents": 0}
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.executemany(
+                """
+                INSERT INTO claims (
+                  claim_id, policy_id, customer_id, anonymous_customer, vehicle_id, provider_id,
+                  line, coverage, city, claim_date, report_date, claim_amount, narrative, recent_customer_change
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                  policy_id=VALUES(policy_id), customer_id=VALUES(customer_id),
+                  anonymous_customer=VALUES(anonymous_customer), vehicle_id=VALUES(vehicle_id),
+                  provider_id=VALUES(provider_id), line=VALUES(line), coverage=VALUES(coverage),
+                  city=VALUES(city), claim_date=VALUES(claim_date), report_date=VALUES(report_date),
+                  claim_amount=VALUES(claim_amount), narrative=VALUES(narrative),
+                  recent_customer_change=VALUES(recent_customer_change)
+                """,
+                [
+                    (
+                        r.claim_id,
+                        r.policy_id,
+                        r.customer_id,
+                        r.anonymous_customer,
+                        None if str(getattr(r, "vehicle_id", "")) in {"", "nan", "None"} else r.vehicle_id,
+                        r.provider_id,
+                        r.line,
+                        r.coverage,
+                        r.city,
+                        r.claim_date,
+                        r.report_date,
+                        float(r.claim_amount),
+                        r.narrative,
+                        _bool(getattr(r, "recent_customer_change", False)),
+                    )
+                    for r in claims.itertuples()
+                ],
+            )
+            if documents:
+                claim_ids = sorted({item["claim_id"] for item in documents})
+                placeholders = ", ".join(["%s"] * len(claim_ids))
+                cursor.execute(f"DELETE FROM claim_documents WHERE claim_id IN ({placeholders})", tuple(claim_ids))
+                cursor.executemany(
+                    "INSERT INTO claim_documents (claim_id, document_type, status) VALUES (%s, %s, %s)",
+                    [(item["claim_id"], item["document_type"], item["status"]) for item in documents],
+                )
+        connection.commit()
+    return {"inserted": int(len(claims)), "documents": int(len(documents))}
+
+
+def has_source_data() -> bool:
+    try:
+        counts = source_table_counts()
+        return counts.get("customers", 0) > 0 and counts.get("policies", 0) > 0 and counts.get("providers", 0) > 0 and counts.get("claims", 0) > 0
+    except Exception:
+        return False
+
+
+def load_source_tables() -> dict:
+    with get_connection() as connection:
+        claims = _read_sql(connection, "SELECT * FROM claims")
+        policies = _read_sql(connection, "SELECT * FROM policies")
+        customers = _read_sql(connection, "SELECT * FROM customers")
+        providers = _read_sql(connection, "SELECT * FROM providers")
+        documents = _read_sql(
+            connection,
+            "SELECT claim_id, document_type, status FROM claim_documents ORDER BY document_id",
+        )
+    return {
+        "claims": _normalize_source_frame(claims),
+        "policies": _normalize_source_frame(policies),
+        "customers": _normalize_source_frame(customers),
+        "providers": _normalize_source_frame(providers),
+        "documents": _normalize_source_frame(documents),
+    }
+
+
+def _read_sql(connection, query: str) -> "pd.DataFrame":
+    import pandas as pd
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        rows = cursor.fetchall()
+    return pd.DataFrame(rows)
+
+
+def _normalize_source_frame(frame):
+    if frame.empty:
+        return frame
+    for column in frame.columns:
+        if column.endswith("_date"):
+            frame[column] = frame[column].astype(str)
+    for column in ["recent_customer_change", "restricted_simulated"]:
+        if column in frame.columns:
+            frame[column] = frame[column].astype(bool)
+    return frame
 
 
 def ensure_runtime_schema() -> None:

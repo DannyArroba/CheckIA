@@ -12,8 +12,10 @@ Ayudar a priorizar casos con posible riesgo sin acusar fraude, sin rechazar auto
 
 - Frontend: React, Vite, TailwindCSS, Recharts, lucide-react.
 - Backend: FastAPI, pandas, numpy, scikit-learn.
-- IA: RandomForestClassifier, IsolationForest, TF-IDF y similitud de coseno.
-- LLM local opcional: Ollama con `gemma2:2b`.
+- Enfoque híbrido: ML + NLP + agente de IA para consultas en lenguaje natural.
+- ML: RandomForestClassifier e IsolationForest para riesgo y anomalías.
+- NLP: TF-IDF y similitud de coseno para narrativas parecidas.
+- Agente IA local: Ollama con `checkia-gemma` para redactar respuestas sobre datos calculados.
 - Datos: CSV sintéticos dentro de `backend/data`.
 - Base de datos: MySQL/MariaDB con esquema en `database/checkia.sql`.
 
@@ -52,7 +54,7 @@ La página **Datos** permite verificar conexión, sincronizar CSV y resultados I
 
 ## Ollama Local
 
-CheckIA puede usar Ollama para responder preguntas abiertas del chat sin enviar datos a servicios externos.
+CheckIA usa Ollama local para el agente conversacional sin enviar datos a servicios externos. Antes de redactar, el backend calcula reglas, ML, anomalías, NLP y explicación; luego Ollama recibe solo datos compactos y responde en lenguaje natural.
 
 ```powershell
 ollama pull gemma2:2b
@@ -73,7 +75,7 @@ Variables disponibles:
 ```text
 OLLAMA_ENABLED=true
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=gemma2:2b
+OLLAMA_MODEL=checkia-gemma
 OLLAMA_TIMEOUT_SECONDS=25
 ```
 
@@ -83,7 +85,7 @@ Modelo local educado para CheckIA:
 ollama create checkia-gemma -f backend/src/ai_agent/Modelfile
 ```
 
-Luego cambia `OLLAMA_MODEL=checkia-gemma`.
+Si usas otro nombre de modelo, cambia `OLLAMA_MODEL` por ese nombre.
 
 ## Instalación Frontend
 
@@ -118,7 +120,7 @@ Niveles:
 
 ## Agente IA
 
-La página Agente IA permite consultar datos con preguntas rápidas y con Ollama local para preguntas abiertas. Las preguntas rápidas son inmediatas; las abiertas usan contexto compacto para responder en un rango razonable. Los IDs como `CLM-0131` son clickeables y abren el detalle del caso.
+La página Agente IA permite consultar datos en lenguaje natural. El flujo es híbrido: el backend interpreta la intención, ejecuta predicción/análisis con datos reales y Ollama redacta la respuesta final. Los IDs como `CLM-0131` son clickeables y abren el detalle del caso.
 
 El historial del chat se guarda en MySQL por conversaciones, parecido a ChatGPT. Puedes crear un nuevo chat, volver a conversaciones anteriores y eliminar chats completos.
 

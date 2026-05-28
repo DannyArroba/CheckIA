@@ -7,7 +7,12 @@ from pathlib import Path
 import pandas as pd
 
 from backend.src.ingestion.load_data import DATA_DIR
-from backend.src.services.claims_service import get_claims_dataset
+from backend.src.services.database_service import (
+    existing_ids,
+    has_source_data,
+    insert_claims_with_documents,
+    load_source_tables,
+)
 
 
 DOC_TYPES = ["formulario de reclamo", "cedula", "fotos del siniestro", "factura/proforma", "informe tecnico"]
@@ -15,7 +20,6 @@ REQUIRED_COLUMNS = {
     "claim_id", "policy_id", "customer_id", "anonymous_customer", "provider_id",
     "line", "coverage", "city", "claim_date", "report_date", "claim_amount", "narrative",
 }
-OPTIONAL_COLUMNS = {"vehicle_id", "recent_customer_change"}
 ALLOWED_LINES = {"Vehiculos", "Salud", "Hogar", "Vida", "Empresarial"}
 NARRATIVES = [
     "Accidente con tercero identificado y soporte fotografico completo.",
@@ -28,19 +32,21 @@ NARRATIVES = [
 
 
 def _next_claim_id(claims: pd.DataFrame, offset: int) -> str:
-    max_id = claims["claim_id"].str.replace("CLM-", "", regex=False).astype(int).max()
+    max_id = claims["claim_id"].astype(str).str.replace("CLM-", "", regex=False).astype(int).max() if not claims.empty else 0
     return f"CLM-{max_id + offset:04d}"
 
 
 def generate_additional_claims(count: int = 25, risk_mix: str = "balanceado") -> dict:
     count = max(1, min(int(count), 100))
     random.seed()
+    if not has_source_data():
+        raise RuntimeError("La base checkia no tiene datos. Sincroniza la semilla SQL antes de generar CSV.")
 
-    claims_path = DATA_DIR / "synthetic_claims.csv"
-    policies = pd.read_csv(DATA_DIR / "synthetic_policies.csv")
-    customers = pd.read_csv(DATA_DIR / "synthetic_customers.csv")
-    providers = pd.read_csv(DATA_DIR / "synthetic_providers.csv")
-    claims = pd.read_csv(claims_path)
+    data = load_source_tables()
+    policies = data["policies"]
+    customers = data["customers"]
+    providers = data["providers"]
+    claims = data["claims"]
 
     generated = []
     for index in range(1, count + 1):
@@ -67,10 +73,9 @@ def generate_additional_claims(count: int = 25, risk_mix: str = "balanceado") ->
             narrative = random.choice(NARRATIVES)
 
         claim_date = min(max(claim_date, start), end - timedelta(days=1))
-        claim_id = _next_claim_id(claims, index)
         generated.append(
             {
-                "claim_id": claim_id,
+                "claim_id": _next_claim_id(claims, index),
                 "policy_id": policy["policy_id"],
                 "customer_id": customer["customer_id"],
                 "anonymous_customer": customer["anonymous_customer"],
@@ -96,7 +101,7 @@ def generate_additional_claims(count: int = 25, risk_mix: str = "balanceado") ->
         "created": len(new_claims),
         "csv_file": export_path.name,
         "download_url": f"/api/dataset/download/{export_path.name}",
-        "message": "CSV generado para descarga. No se agregó al dataset activo hasta que lo cargues manualmente.",
+        "message": "CSV generado para descarga. No modifica MySQL hasta que lo cargues manualmente.",
     }
 
 
@@ -125,17 +130,15 @@ def append_uploaded_claims(file_path: Path) -> dict:
     if validation_errors:
         return {
             "accepted": False,
-            "reason": "El archivo tiene columnas correctas, pero algunos valores no son válidos para el modelo.",
+            "reason": "El archivo tiene columnas correctas, pero algunos valores no son validos para el modelo.",
             "validation_errors": validation_errors,
             "required_columns": sorted(REQUIRED_COLUMNS),
             "detected_columns": list(incoming.columns),
         }
 
-    claims_path = DATA_DIR / "synthetic_claims.csv"
-    existing = pd.read_csv(claims_path)
-    existing_ids = set(existing["claim_id"].astype(str))
+    db_claim_ids = existing_ids("claims", "claim_id")
     incoming["claim_id"] = incoming["claim_id"].astype(str).str.strip()
-    duplicate_mask = incoming["claim_id"].isin(existing_ids) | incoming["claim_id"].duplicated(keep="first")
+    duplicate_mask = incoming["claim_id"].isin(db_claim_ids) | incoming["claim_id"].duplicated(keep="first")
     skipped_duplicates = int(duplicate_mask.sum())
     duplicate_claim_ids = incoming.loc[duplicate_mask, "claim_id"].head(10).tolist()
     incoming = incoming[~duplicate_mask].copy()
@@ -146,8 +149,8 @@ def append_uploaded_claims(file_path: Path) -> dict:
             "received_rows": received_rows,
             "skipped_duplicates": skipped_duplicates,
             "duplicate_claim_ids": duplicate_claim_ids,
-            "total_claims": int(len(get_claims_dataset())),
-            "message": "El CSV fue válido, pero no contiene siniestros nuevos para agregar.",
+            "total_claims": len(db_claim_ids),
+            "message": "El CSV fue valido, pero no contiene siniestros nuevos para agregar a MySQL.",
         }
 
     if "vehicle_id" not in incoming.columns:
@@ -155,28 +158,59 @@ def append_uploaded_claims(file_path: Path) -> dict:
     if "recent_customer_change" not in incoming.columns:
         incoming["recent_customer_change"] = False
 
-    incoming = incoming[existing.columns]
-    pd.concat([existing, incoming], ignore_index=True).to_csv(claims_path, index=False)
+    reference_errors = _validate_foreign_keys(incoming)
+    if reference_errors:
+        return {
+            "accepted": False,
+            "reason": "El archivo contiene IDs que no existen en la base de datos.",
+            "validation_errors": reference_errors,
+            "required_columns": sorted(REQUIRED_COLUMNS),
+            "detected_columns": list(incoming.columns),
+        }
 
-    docs_path = DATA_DIR / "synthetic_documents.csv"
-    documents = pd.read_csv(docs_path)
+    columns = [
+        "claim_id", "policy_id", "customer_id", "anonymous_customer", "vehicle_id", "provider_id",
+        "line", "coverage", "city", "claim_date", "report_date", "claim_amount", "narrative", "recent_customer_change",
+    ]
+    incoming = incoming[columns]
     new_docs = [
         {"claim_id": row.claim_id, "document_type": doc_type, "status": "completo"}
         for row in incoming.itertuples()
         for doc_type in DOC_TYPES
     ]
-    pd.concat([documents, pd.DataFrame(new_docs)], ignore_index=True).to_csv(docs_path, index=False)
-    get_claims_dataset.cache_clear()
+    inserted = insert_claims_with_documents(incoming, new_docs)
 
+    from backend.src.services.claims_service import get_claims_dataset, sync_database
+
+    get_claims_dataset.cache_clear()
+    sync_database()
+    total_claims = int(len(get_claims_dataset()))
     return {
         "accepted": True,
-        "inserted": int(len(incoming)),
+        "inserted": inserted["inserted"],
         "received_rows": received_rows,
         "skipped_duplicates": skipped_duplicates,
         "duplicate_claim_ids": duplicate_claim_ids,
-        "total_claims": int(len(get_claims_dataset())),
-        "message": "Carga incremental completada. Los siniestros repetidos fueron omitidos por claim_id.",
+        "total_claims": total_claims,
+        "message": "Carga incremental completada en MySQL. Los resultados IA fueron recalculados y sincronizados.",
     }
+
+
+def _validate_foreign_keys(frame: pd.DataFrame) -> list[str]:
+    errors = []
+    policies = existing_ids("policies", "policy_id")
+    customers = existing_ids("customers", "customer_id")
+    providers = existing_ids("providers", "provider_id")
+    missing_policies = sorted(set(frame["policy_id"].astype(str)) - policies)
+    missing_customers = sorted(set(frame["customer_id"].astype(str)) - customers)
+    missing_providers = sorted(set(frame["provider_id"].astype(str)) - providers)
+    if missing_policies:
+        errors.append(f"policy_id no existe en la base: {', '.join(missing_policies[:10])}.")
+    if missing_customers:
+        errors.append(f"customer_id no existe en la base: {', '.join(missing_customers[:10])}.")
+    if missing_providers:
+        errors.append(f"provider_id no existe en la base: {', '.join(missing_providers[:10])}.")
+    return errors
 
 
 def _validate_claim_rows(frame: pd.DataFrame) -> list[str]:
@@ -197,19 +231,19 @@ def _validate_claim_rows(frame: pd.DataFrame) -> list[str]:
     parsed_claim_dates = pd.to_datetime(sample["claim_date"], errors="coerce")
     parsed_report_dates = pd.to_datetime(sample["report_date"], errors="coerce")
     if parsed_claim_dates.isna().any() or parsed_report_dates.isna().any():
-        errors.append("Las columnas claim_date y report_date deben tener fechas válidas, por ejemplo 2026-03-15.")
+        errors.append("Las columnas claim_date y report_date deben tener fechas validas, por ejemplo 2026-03-15.")
     elif (parsed_report_dates < parsed_claim_dates).any():
         errors.append("report_date no puede ser anterior a claim_date.")
 
     amounts = pd.to_numeric(sample["claim_amount"], errors="coerce")
     if amounts.isna().any() or (amounts <= 0).any():
-        errors.append("claim_amount debe ser numérico y mayor que cero.")
+        errors.append("claim_amount debe ser numerico y mayor que cero.")
 
     invalid_lines = sorted(set(sample["line"].dropna().astype(str)) - ALLOWED_LINES)
     if invalid_lines:
         errors.append(f"line contiene ramos no reconocidos: {', '.join(invalid_lines)}.")
 
     if sample["narrative"].fillna("").astype(str).str.len().lt(12).any():
-        errors.append("narrative debe contener una descripción del reclamo con suficiente contexto.")
+        errors.append("narrative debe contener una descripcion del reclamo con suficiente contexto.")
 
     return errors

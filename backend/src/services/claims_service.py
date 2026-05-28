@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from difflib import get_close_matches
 from datetime import datetime
 from functools import lru_cache
 import re
@@ -10,20 +11,29 @@ from backend.src.ai_agent.claims_agent import ClaimsAgent
 from backend.src.ai_agent.ollama_client import OllamaClient
 from backend.src.explainability.explain_score import explain_claim, risk_level
 from backend.src.features.build_features import build_claim_contexts, build_model_features
-from backend.src.ingestion.load_data import load_all_data
 from backend.src.models.fraud_model import FraudRiskModel
 from backend.src.services.database_service import (
     get_latest_review_actions,
+    has_source_data,
+    load_source_tables,
     review_actions_summary,
     save_agent_message,
+    source_table_counts,
     sync_risk_results,
     sync_source_tables,
+)
+from backend.src.services.hybrid_analysis_service import (
+    has_claims_intent,
+    hybrid_model_summary,
+    predictive_preanalysis,
 )
 
 
 @lru_cache(maxsize=1)
 def get_claims_dataset() -> pd.DataFrame:
-    data = load_all_data()
+    if not has_source_data():
+        raise RuntimeError("La base checkia no tiene datos fuente. Usa /api/database/sync para cargar la semilla SQL.")
+    data = load_source_tables()
     enriched = build_claim_contexts(data)
     features = build_model_features(enriched)
     model = FraudRiskModel()
@@ -170,18 +180,196 @@ def executive_report() -> dict:
     }
 
 
+def hybrid_status() -> dict:
+    return hybrid_model_summary(get_claims_dataset())
+
+
 def ask_agent(message: str, conversation_id: int | None = None) -> dict:
     conversation_id = save_agent_message("usuario", message, "usuario", conversation_id)
-    quick_response = _light_ollama_response(message)
+    corrected_message = _normalize_user_message(message)
+    correction_response = _quality_gate_response(message, corrected_message)
+    if correction_response:
+        save_agent_message("agente", correction_response["answer"], correction_response["provider"], conversation_id)
+        correction_response["conversation_id"] = conversation_id
+        return correction_response
+
+    quick_response = _light_ollama_response(corrected_message)
     if quick_response:
         save_agent_message("agente", quick_response["answer"], quick_response["provider"], conversation_id)
         quick_response["conversation_id"] = conversation_id
         return quick_response
 
-    response = ClaimsAgent(get_claims_dataset(), _review_context()).answer(message)
+    df = get_claims_dataset()
+    response = ClaimsAgent(df, _review_context()).answer(corrected_message)
+    if corrected_message.strip().lower() != message.strip().lower():
+        response["answer"] = f"Interpreté tu solicitud como: {corrected_message}.\n{response['answer']}"
+    preanalysis = predictive_preanalysis(corrected_message, df, response.get("related_claims", []))
+    if preanalysis:
+        response["answer"] = f"{response['answer']}\n\nAnalisis predictivo previo:\n{preanalysis}"
+    response = _rewrite_response_with_ollama(corrected_message, response)
+    response = _format_claim_detail_response(corrected_message, response, df)
     save_agent_message("agente", response["answer"], response.get("provider", "reglas"), conversation_id)
     response["conversation_id"] = conversation_id
     return response
+
+
+def _normalize_user_message(message: str) -> str:
+    corrected_words = []
+    terms = [
+        "analisis", "caso", "casos", "ciudad", "ciudades", "documentos", "estado",
+        "explica", "monto", "montos", "proveedor", "proveedores", "resumen", "riesgo",
+        "score", "seguimiento", "siniestro", "siniestros", "top", "ultimos",
+    ]
+    aliases = {
+        "analis": "analisis",
+        "analisis": "analisis",
+        "documetos": "documentos",
+        "documento": "documentos",
+        "prveedor": "proveedor",
+        "provedor": "proveedor",
+        "proveedro": "proveedor",
+        "resuemn": "resumen",
+        "rezumen": "resumen",
+        "riesgos": "riesgo",
+        "sinestro": "siniestro",
+        "sinietro": "siniestro",
+        "siniestros": "siniestros",
+        "ultimos": "ultimos",
+        "últimos": "ultimos",
+    }
+    for token in re.findall(r"CLM-\d{4,}|[A-Za-zÁÉÍÓÚáéíóúÑñ]+|\d+|[^\w\s]", message, flags=re.IGNORECASE):
+        lower = token.lower()
+        if re.fullmatch(r"clm-\d{4,}", lower):
+            corrected_words.append(token.upper())
+        elif lower in aliases:
+            corrected_words.append(aliases[lower])
+        elif lower.isalpha() and len(lower) >= 5:
+            match = get_close_matches(lower, terms, n=1, cutoff=0.84)
+            corrected_words.append(match[0] if match else token)
+        else:
+            corrected_words.append(token)
+    return _join_tokens(corrected_words)
+
+
+def _join_tokens(tokens: list[str]) -> str:
+    text = " ".join(tokens)
+    text = re.sub(r"\s+([,.;:?!])", r"\1", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _quality_gate_response(original: str, corrected: str) -> dict | None:
+    text = original.strip()
+    normalized = corrected.lower()
+    if not text:
+        return _ask_for_clarification(original, "El mensaje llegó vacío.")
+    if re.fullmatch(r"[^\wÁÉÍÓÚáéíóúÑñ]+", text):
+        return _ask_for_clarification(original, "El mensaje no contiene una solicitud legible.")
+    if len(re.sub(r"\W+", "", text)) <= 1:
+        return _ask_for_clarification(original, "El mensaje es demasiado corto para interpretar una intención.")
+    if _looks_like_noise(text) and not has_claims_intent(normalized):
+        return _ask_for_clarification(original, "No logré detectar una intención clara.")
+    return None
+
+
+def _looks_like_noise(text: str) -> bool:
+    words = re.findall(r"[A-Za-zÁÉÍÓÚáéíóúÑñ]{4,}", text.lower())
+    if not words:
+        return False
+    vowel_words = sum(1 for word in words if re.search(r"[aeiouáéíóú]", word))
+    repeated = bool(re.search(r"(.)\1{4,}", text.lower()))
+    return repeated or (len(words) >= 2 and vowel_words / len(words) < 0.45)
+
+
+def _ask_for_clarification(message: str, reason: str) -> dict:
+    prompt = (
+        "El usuario escribió una petición confusa para CheckIA. "
+        "Pide aclaración de forma amable y breve. No inventes datos. "
+        "Da 2 ejemplos concretos de preguntas válidas sobre siniestros. "
+        f"Motivo detectado: {reason}\n"
+        f"Mensaje del usuario: {message}"
+    )
+    fallback = "No logré entender la solicitud. Puedes preguntarme, por ejemplo: 'detalle de CLM-0129' o 'últimos 5 casos'."
+    answer = _clean_light_answer(_strip_symbols(OllamaClient().generate(prompt, num_predict=80, timeout=12) or fallback))
+    return {
+        "answer": answer,
+        "related_claims": [],
+        "provider": "ollama correccion",
+        "suggestions": ["Detalle de CLM-0129", "Últimos 5 casos", "Top 10 casos"],
+        "disclaimer": "",
+    }
+
+def _rewrite_response_with_ollama(message: str, response: dict) -> dict:
+    if response.get("provider") == "ollama":
+        return response
+    original_answer = response.get("answer", "")
+    allowed_claims = set(response.get("related_claims") or [])
+    allowed_text = ", ".join(sorted(allowed_claims)) if allowed_claims else "solo los IDs presentes en datos calculados"
+    prompt = (
+        "Redacta la respuesta final de CheckIA con tono natural, profesional y breve.\n"
+        "Usa solo los datos calculados. No inventes IDs, montos, proveedores, ciudades ni metricas.\n"
+        "No acuses fraude ni tomes decisiones finales.\n"
+        "Conserva IDs CLM exactos y cifras importantes.\n\n"
+        "Si hay una lista, mantenla compacta para que no se corte.\n"
+        "Si hay analisis predictivo previo, integra score final, modelo, anomalia, NLP y factores explicables cuando sea relevante.\n"
+        f"IDs permitidos: {allowed_text}.\n"
+        f"Pregunta del usuario: {message}\n"
+        f"Datos calculados:\n{original_answer}\n"
+    )
+    answer = OllamaClient().generate(prompt, num_predict=340, timeout=45)
+    if not answer:
+        response["answer"] = _strip_preanalysis_block(original_answer)
+        return response
+    cleaned = _clean_light_answer(_strip_symbols(answer))
+    mentioned = set(re.findall(r"CLM-\d{4,}", cleaned))
+    if allowed_claims and (mentioned - allowed_claims):
+        cleaned = original_answer
+    response["provider"] = "ollama + datos"
+    response["answer"] = cleaned
+    return response
+
+
+def _format_claim_detail_response(message: str, response: dict, df: pd.DataFrame) -> dict:
+    claim_ids = sorted(set(re.findall(r"CLM-\d{4,}", message.upper())))
+    if len(claim_ids) != 1:
+        return response
+    claim_id = claim_ids[0]
+    match = df[df["claim_id"] == claim_id]
+    if match.empty:
+        return response
+
+    row = match.iloc[0]
+    rules = row.get("rules", []) or []
+    signal_lines = [f"- {rule['nombre']}" for rule in rules[:5]]
+    if not signal_lines:
+        signal_lines = ["- Sin reglas fuertes registradas"]
+
+    action = row.get("recommended_action", "Revision humana recomendada")
+    amount = float(row.get("claim_amount") or 0)
+    response["provider"] = "ollama + datos"
+    response["answer"] = (
+        f"## {claim_id} - Riesgo {row.get('risk_level')} ({int(row.get('risk_score', 0))}/100)\n\n"
+        f"**Resumen:** {action}. Esta lectura es apoyo para analisis humano, no una decision final.\n\n"
+        "**Datos clave**\n"
+        f"- Ciudad: {row.get('city')}\n"
+        f"- Proveedor: {row.get('provider_name')}\n"
+        f"- Monto: USD {amount:,.0f}\n"
+        f"- Documentos: {row.get('document_statuses', 'sin detalle documental')}\n\n"
+        "**Senales detectadas**\n"
+        + "\n".join(signal_lines)
+        + "\n\n"
+        "**Lectura predictiva**\n"
+        f"- Reglas: {float(row.get('rule_score', 0)):.1f}\n"
+        f"- Modelo ML: {float(row.get('model_score', 0)):.1f}\n"
+        f"- Anomalia: {float(row.get('anomaly_score', 0)):.1f}\n"
+        f"- NLP: {float(row.get('nlp_score', 0)):.1f}\n\n"
+        "**Siguiente paso**\n"
+        "Validar documentos faltantes o inconsistentes, revisar la narrativa y contrastar el expediente antes de tomar acciones."
+    )
+    return response
+
+
+def _strip_preanalysis_block(text: str) -> str:
+    return text.split("\n\nAnalisis predictivo previo:", 1)[0].strip()
 
 
 def _light_ollama_response(message: str) -> dict | None:
@@ -221,7 +409,7 @@ def _light_ollama_response(message: str) -> dict | None:
             fallback="Puedo resumir riesgos, listar casos prioritarios, revisar proveedores, documentos, ciudades y seguimientos humanos.",
             suggestions=["Top 10 casos", "Documentos críticos", "Seguimiento humano"],
         )
-    if not _has_claims_intent(normalized):
+    if not has_claims_intent(normalized):
         return _ask_ollama_light(
             message,
             fallback="Sí, puedo ayudarte con eso. Si quieres, también puedo revisar información de siniestros.",
@@ -265,19 +453,6 @@ def _clean_light_answer(text: str) -> str:
     kept = [line for line in lines if not any(phrase.lower() in line.lower() for phrase in blocked)]
     return " ".join(kept).strip() or text.strip()
 
-
-def _has_claims_intent(text: str) -> bool:
-    terms = [
-        "caso", "casos", "siniestro", "siniestros", "riesgo", "riesgos", "fraude",
-        "proveedor", "proveedores", "documento", "documentos", "monto", "montos",
-        "ciudad", "ciudades", "seguimiento", "observacion", "observación", "estado",
-        "poliza", "póliza", "reporte", "score", "alerta", "alertas", "resumen",
-        "dashboard", "rojo", "amarillo", "verde", "top", "revisar", "revisión",
-        "revision", "asegurado", "aseguradora", "cobertura", "claim", "clm-"
-    ]
-    return any(term in text for term in terms)
-
-
 def _review_context() -> list[dict]:
     try:
         return review_actions_summary()
@@ -290,6 +465,6 @@ def agent_status() -> dict:
 
 
 def sync_database() -> dict:
-    source_counts = sync_source_tables()
+    source_counts = source_table_counts() if has_source_data() else sync_source_tables()
     risk_counts = sync_risk_results(get_claims_dataset())
     return {"source": source_counts, "risk": risk_counts}

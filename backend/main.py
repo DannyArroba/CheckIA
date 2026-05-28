@@ -27,6 +27,7 @@ from backend.src.services.claims_service import (
     dashboard_summary,
     executive_report,
     get_claim,
+    hybrid_status,
     list_claims,
     providers_ranking,
     sync_database,
@@ -113,6 +114,11 @@ def city_ranking() -> list[dict]:
 @app.get("/api/reports/executive-summary")
 def report() -> dict:
     return executive_report()
+
+
+@app.get("/api/model/hybrid-status")
+def model_hybrid_status() -> dict:
+    return hybrid_status()
 
 
 @app.post("/api/agent/chat")

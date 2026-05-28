@@ -4,19 +4,14 @@ import json
 import os
 import urllib.error
 import urllib.request
-from pathlib import Path
-
-
-PROMPT_PATH = Path(__file__).resolve().with_name("checkia_system_prompt.md")
 
 
 class OllamaClient:
     def __init__(self) -> None:
         self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.model = os.getenv("OLLAMA_MODEL", "gemma2:2b")
+        self.model = os.getenv("OLLAMA_MODEL", "checkia-gemma")
         self.timeout = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "25"))
         self.enabled = os.getenv("OLLAMA_ENABLED", "true").lower() == "true"
-        self.system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
 
     def generate(self, prompt: str, num_predict: int | None = None, timeout: float | None = None) -> str | None:
         if not self.enabled:
@@ -24,15 +19,15 @@ class OllamaClient:
 
         payload = {
             "model": self.model,
-            "prompt": f"{self.system_prompt}\n\n{prompt}",
+            "prompt": prompt,
             "stream": False,
             "keep_alive": "10m",
             "options": {
-                "temperature": 0.45,
-                "top_p": 0.9,
-                "num_ctx": 1024,
-                "num_predict": num_predict or 150,
-                "repeat_penalty": 1.08,
+                "temperature": 0.18,
+                "top_p": 0.8,
+                "num_ctx": 2048,
+                "num_predict": num_predict or 180,
+                "repeat_penalty": 1.12,
             },
         }
         request = urllib.request.Request(

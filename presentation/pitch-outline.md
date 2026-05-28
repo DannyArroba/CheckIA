@@ -19,7 +19,7 @@ CheckIA analiza siniestros sintéticos, calcula un score de 0 a 100 y clasifica 
 
 ## 4. Arquitectura e IA
 
-Backend FastAPI con pandas y scikit-learn. Frontend React/Vite con Tailwind y Recharts. El score combina reglas explicables 70%, modelo IA/anomalías 20% y NLP 10%.
+Backend FastAPI con pandas y scikit-learn. Frontend React/Vite con Tailwind y Recharts. CheckIA usa un enfoque híbrido: ML + NLP + agente de IA para consultas en lenguaje natural. El score combina reglas explicables 70%, modelo IA/anomalías 20% y NLP 10%; el agente recibe ese análisis y lo explica con Ollama local.
 
 ## 5. Impacto
 
