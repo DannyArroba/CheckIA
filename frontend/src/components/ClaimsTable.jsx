@@ -1,5 +1,5 @@
-import { Search, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import RiskBadge from './RiskBadge.jsx'
 
 const columns = [
@@ -23,6 +23,8 @@ const columns = [
 export default function ClaimsTable({ claims, onSelect }) {
   const [openFilter, setOpenFilter] = useState(null)
   const [filters, setFilters] = useState({})
+  const scrollRef = useRef(null)
+  const [scrollState, setScrollState] = useState({ left: false, right: false })
 
   const filteredClaims = useMemo(() => {
     return claims.filter((claim) => {
@@ -47,17 +49,68 @@ export default function ClaimsTable({ claims, onSelect }) {
     })
   }
 
+  function updateScrollState() {
+    const node = scrollRef.current
+    if (!node) return
+    setScrollState({
+      left: node.scrollLeft > 4,
+      right: node.scrollLeft + node.clientWidth < node.scrollWidth - 4
+    })
+  }
+
+  function scrollTable(direction) {
+    const node = scrollRef.current
+    if (!node) return
+    node.scrollBy({ left: direction * Math.max(260, node.clientWidth * 0.65), behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    updateScrollState()
+    const node = scrollRef.current
+    if (!node) return undefined
+    node.addEventListener('scroll', updateScrollState)
+    window.addEventListener('resize', updateScrollState)
+    return () => {
+      node.removeEventListener('scroll', updateScrollState)
+      window.removeEventListener('resize', updateScrollState)
+    }
+  }, [filteredClaims.length])
+
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
+    <div className="rounded-lg border border-slate-200 bg-white shadow-soft">
       <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
         Mostrando <strong>{filteredClaims.length}</strong> de <strong>{claims.length}</strong> siniestros
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-0 right-0 z-30 flex items-center justify-between px-2">
+          <button
+            type="button"
+            onClick={() => scrollTable(-1)}
+            disabled={!scrollState.left}
+            className="pointer-events-auto grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-soft backdrop-blur hover:border-electric hover:text-electric disabled:cursor-not-allowed disabled:opacity-30"
+            title="Mover tabla a la izquierda"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollTable(1)}
+            disabled={!scrollState.right}
+            className="pointer-events-auto grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-soft backdrop-blur hover:border-electric hover:text-electric disabled:cursor-not-allowed disabled:opacity-30"
+            title="Mover tabla a la derecha"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+        <div ref={scrollRef} className="max-h-[70vh] overflow-auto scroll-smooth">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
             <tr>
               {columns.map((column) => (
-                <th key={column.key} className="px-4 py-3 text-left align-top text-xs font-bold uppercase tracking-wide text-slate-500">
+                <th
+                  key={column.key}
+                  className="sticky top-0 z-20 bg-slate-50 px-4 py-3 text-left align-top text-xs font-bold uppercase tracking-wide text-slate-500 shadow-[0_1px_0_0_rgba(226,232,240,1)]"
+                >
                   <div className="flex min-w-28 items-center gap-2">
                     <span>{column.label}</span>
                     <button
@@ -108,7 +161,8 @@ export default function ClaimsTable({ claims, onSelect }) {
               </tr>
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
     </div>
   )

@@ -1,801 +1,951 @@
-﻿"claim_id","document_type","status"
-"CLM-0001","formulario de reclamo","completo"
-"CLM-0001","cedula","completo"
-"CLM-0001","fotos del siniestro","completo"
-"CLM-0001","factura/proforma","completo"
-"CLM-0001","informe tecnico","completo"
-"CLM-0002","formulario de reclamo","completo"
-"CLM-0002","cedula","completo"
-"CLM-0002","fotos del siniestro","completo"
-"CLM-0002","factura/proforma","completo"
-"CLM-0002","informe tecnico","completo"
-"CLM-0003","formulario de reclamo","completo"
-"CLM-0003","cedula","completo"
-"CLM-0003","fotos del siniestro","completo"
-"CLM-0003","factura/proforma","completo"
-"CLM-0003","informe tecnico","completo"
-"CLM-0004","formulario de reclamo","completo"
-"CLM-0004","cedula","completo"
-"CLM-0004","fotos del siniestro","completo"
-"CLM-0004","factura/proforma","completo"
-"CLM-0004","informe tecnico","completo"
-"CLM-0005","formulario de reclamo","completo"
-"CLM-0005","cedula","completo"
-"CLM-0005","fotos del siniestro","completo"
-"CLM-0005","factura/proforma","completo"
-"CLM-0005","informe tecnico","completo"
-"CLM-0006","formulario de reclamo","completo"
-"CLM-0006","cedula","completo"
-"CLM-0006","fotos del siniestro","completo"
-"CLM-0006","factura/proforma","completo"
-"CLM-0006","informe tecnico","completo"
-"CLM-0007","formulario de reclamo","completo"
-"CLM-0007","cedula","completo"
-"CLM-0007","fotos del siniestro","completo"
-"CLM-0007","factura/proforma","completo"
-"CLM-0007","informe tecnico","completo"
-"CLM-0008","formulario de reclamo","completo"
-"CLM-0008","cedula","completo"
-"CLM-0008","fotos del siniestro","completo"
-"CLM-0008","factura/proforma","completo"
-"CLM-0008","informe tecnico","completo"
-"CLM-0009","formulario de reclamo","completo"
-"CLM-0009","cedula","completo"
-"CLM-0009","fotos del siniestro","completo"
-"CLM-0009","factura/proforma","completo"
-"CLM-0009","informe tecnico","completo"
-"CLM-0010","formulario de reclamo","completo"
-"CLM-0010","cedula","completo"
-"CLM-0010","fotos del siniestro","completo"
-"CLM-0010","factura/proforma","completo"
-"CLM-0010","informe tecnico","completo"
-"CLM-0011","formulario de reclamo","completo"
-"CLM-0011","cedula","completo"
-"CLM-0011","fotos del siniestro","completo"
-"CLM-0011","factura/proforma","completo"
-"CLM-0011","informe tecnico","completo"
-"CLM-0012","formulario de reclamo","completo"
-"CLM-0012","cedula","completo"
-"CLM-0012","fotos del siniestro","completo"
-"CLM-0012","factura/proforma","completo"
-"CLM-0012","informe tecnico","completo"
-"CLM-0013","formulario de reclamo","completo"
-"CLM-0013","cedula","completo"
-"CLM-0013","fotos del siniestro","completo"
-"CLM-0013","factura/proforma","completo"
-"CLM-0013","informe tecnico","completo"
-"CLM-0014","formulario de reclamo","completo"
-"CLM-0014","cedula","completo"
-"CLM-0014","fotos del siniestro","completo"
-"CLM-0014","factura/proforma","completo"
-"CLM-0014","informe tecnico","completo"
-"CLM-0015","formulario de reclamo","completo"
-"CLM-0015","cedula","completo"
-"CLM-0015","fotos del siniestro","completo"
-"CLM-0015","factura/proforma","completo"
-"CLM-0015","informe tecnico","completo"
-"CLM-0016","formulario de reclamo","completo"
-"CLM-0016","cedula","completo"
-"CLM-0016","fotos del siniestro","completo"
-"CLM-0016","factura/proforma","completo"
-"CLM-0016","informe tecnico","completo"
-"CLM-0017","formulario de reclamo","completo"
-"CLM-0017","cedula","completo"
-"CLM-0017","fotos del siniestro","completo"
-"CLM-0017","factura/proforma","completo"
-"CLM-0017","informe tecnico","completo"
-"CLM-0018","formulario de reclamo","completo"
-"CLM-0018","cedula","completo"
-"CLM-0018","fotos del siniestro","completo"
-"CLM-0018","factura/proforma","completo"
-"CLM-0018","informe tecnico","completo"
-"CLM-0019","formulario de reclamo","completo"
-"CLM-0019","cedula","completo"
-"CLM-0019","fotos del siniestro","completo"
-"CLM-0019","factura/proforma","completo"
-"CLM-0019","informe tecnico","completo"
-"CLM-0020","formulario de reclamo","completo"
-"CLM-0020","cedula","completo"
-"CLM-0020","fotos del siniestro","completo"
-"CLM-0020","factura/proforma","completo"
-"CLM-0020","informe tecnico","completo"
-"CLM-0021","formulario de reclamo","completo"
-"CLM-0021","cedula","completo"
-"CLM-0021","fotos del siniestro","completo"
-"CLM-0021","factura/proforma","completo"
-"CLM-0021","informe tecnico","completo"
-"CLM-0022","formulario de reclamo","completo"
-"CLM-0022","cedula","completo"
-"CLM-0022","fotos del siniestro","completo"
-"CLM-0022","factura/proforma","completo"
-"CLM-0022","informe tecnico","completo"
-"CLM-0023","formulario de reclamo","completo"
-"CLM-0023","cedula","completo"
-"CLM-0023","fotos del siniestro","completo"
-"CLM-0023","factura/proforma","completo"
-"CLM-0023","informe tecnico","completo"
-"CLM-0024","formulario de reclamo","completo"
-"CLM-0024","cedula","completo"
-"CLM-0024","fotos del siniestro","completo"
-"CLM-0024","factura/proforma","completo"
-"CLM-0024","informe tecnico","completo"
-"CLM-0025","formulario de reclamo","completo"
-"CLM-0025","cedula","completo"
-"CLM-0025","fotos del siniestro","completo"
-"CLM-0025","factura/proforma","completo"
-"CLM-0025","informe tecnico","completo"
-"CLM-0026","formulario de reclamo","completo"
-"CLM-0026","cedula","completo"
-"CLM-0026","fotos del siniestro","completo"
-"CLM-0026","factura/proforma","completo"
-"CLM-0026","informe tecnico","completo"
-"CLM-0027","formulario de reclamo","completo"
-"CLM-0027","cedula","completo"
-"CLM-0027","fotos del siniestro","completo"
-"CLM-0027","factura/proforma","completo"
-"CLM-0027","informe tecnico","completo"
-"CLM-0028","formulario de reclamo","completo"
-"CLM-0028","cedula","completo"
-"CLM-0028","fotos del siniestro","completo"
-"CLM-0028","factura/proforma","completo"
-"CLM-0028","informe tecnico","completo"
-"CLM-0029","formulario de reclamo","completo"
-"CLM-0029","cedula","completo"
-"CLM-0029","fotos del siniestro","completo"
-"CLM-0029","factura/proforma","completo"
-"CLM-0029","informe tecnico","completo"
-"CLM-0030","formulario de reclamo","completo"
-"CLM-0030","cedula","completo"
-"CLM-0030","fotos del siniestro","completo"
-"CLM-0030","factura/proforma","completo"
-"CLM-0030","informe tecnico","completo"
-"CLM-0031","formulario de reclamo","completo"
-"CLM-0031","cedula","completo"
-"CLM-0031","fotos del siniestro","completo"
-"CLM-0031","factura/proforma","completo"
-"CLM-0031","informe tecnico","completo"
-"CLM-0032","formulario de reclamo","completo"
-"CLM-0032","cedula","completo"
-"CLM-0032","fotos del siniestro","completo"
-"CLM-0032","factura/proforma","completo"
-"CLM-0032","informe tecnico","completo"
-"CLM-0033","formulario de reclamo","completo"
-"CLM-0033","cedula","completo"
-"CLM-0033","fotos del siniestro","completo"
-"CLM-0033","factura/proforma","completo"
-"CLM-0033","informe tecnico","completo"
-"CLM-0034","formulario de reclamo","completo"
-"CLM-0034","cedula","completo"
-"CLM-0034","fotos del siniestro","completo"
-"CLM-0034","factura/proforma","completo"
-"CLM-0034","informe tecnico","completo"
-"CLM-0035","formulario de reclamo","completo"
-"CLM-0035","cedula","completo"
-"CLM-0035","fotos del siniestro","completo"
-"CLM-0035","factura/proforma","completo"
-"CLM-0035","informe tecnico","completo"
-"CLM-0036","formulario de reclamo","completo"
-"CLM-0036","cedula","completo"
-"CLM-0036","fotos del siniestro","completo"
-"CLM-0036","factura/proforma","completo"
-"CLM-0036","informe tecnico","completo"
-"CLM-0037","formulario de reclamo","completo"
-"CLM-0037","cedula","completo"
-"CLM-0037","fotos del siniestro","completo"
-"CLM-0037","factura/proforma","completo"
-"CLM-0037","informe tecnico","completo"
-"CLM-0038","formulario de reclamo","completo"
-"CLM-0038","cedula","completo"
-"CLM-0038","fotos del siniestro","completo"
-"CLM-0038","factura/proforma","completo"
-"CLM-0038","informe tecnico","completo"
-"CLM-0039","formulario de reclamo","completo"
-"CLM-0039","cedula","completo"
-"CLM-0039","fotos del siniestro","completo"
-"CLM-0039","factura/proforma","completo"
-"CLM-0039","informe tecnico","completo"
-"CLM-0040","formulario de reclamo","completo"
-"CLM-0040","cedula","completo"
-"CLM-0040","fotos del siniestro","completo"
-"CLM-0040","factura/proforma","completo"
-"CLM-0040","informe tecnico","completo"
-"CLM-0041","formulario de reclamo","completo"
-"CLM-0041","cedula","completo"
-"CLM-0041","fotos del siniestro","completo"
-"CLM-0041","factura/proforma","completo"
-"CLM-0041","informe tecnico","completo"
-"CLM-0042","formulario de reclamo","completo"
-"CLM-0042","cedula","completo"
-"CLM-0042","fotos del siniestro","completo"
-"CLM-0042","factura/proforma","completo"
-"CLM-0042","informe tecnico","completo"
-"CLM-0043","formulario de reclamo","completo"
-"CLM-0043","cedula","completo"
-"CLM-0043","fotos del siniestro","completo"
-"CLM-0043","factura/proforma","completo"
-"CLM-0043","informe tecnico","completo"
-"CLM-0044","formulario de reclamo","completo"
-"CLM-0044","cedula","completo"
-"CLM-0044","fotos del siniestro","completo"
-"CLM-0044","factura/proforma","completo"
-"CLM-0044","informe tecnico","completo"
-"CLM-0045","formulario de reclamo","completo"
-"CLM-0045","cedula","completo"
-"CLM-0045","fotos del siniestro","completo"
-"CLM-0045","factura/proforma","completo"
-"CLM-0045","informe tecnico","completo"
-"CLM-0046","formulario de reclamo","completo"
-"CLM-0046","cedula","completo"
-"CLM-0046","fotos del siniestro","completo"
-"CLM-0046","factura/proforma","completo"
-"CLM-0046","informe tecnico","completo"
-"CLM-0047","formulario de reclamo","completo"
-"CLM-0047","cedula","completo"
-"CLM-0047","fotos del siniestro","completo"
-"CLM-0047","factura/proforma","completo"
-"CLM-0047","informe tecnico","completo"
-"CLM-0048","formulario de reclamo","completo"
-"CLM-0048","cedula","completo"
-"CLM-0048","fotos del siniestro","completo"
-"CLM-0048","factura/proforma","completo"
-"CLM-0048","informe tecnico","completo"
-"CLM-0049","formulario de reclamo","completo"
-"CLM-0049","cedula","completo"
-"CLM-0049","fotos del siniestro","completo"
-"CLM-0049","factura/proforma","completo"
-"CLM-0049","informe tecnico","completo"
-"CLM-0050","formulario de reclamo","completo"
-"CLM-0050","cedula","completo"
-"CLM-0050","fotos del siniestro","completo"
-"CLM-0050","factura/proforma","completo"
-"CLM-0050","informe tecnico","completo"
-"CLM-0051","formulario de reclamo","completo"
-"CLM-0051","cedula","completo"
-"CLM-0051","fotos del siniestro","completo"
-"CLM-0051","factura/proforma","completo"
-"CLM-0051","informe tecnico","completo"
-"CLM-0052","formulario de reclamo","completo"
-"CLM-0052","cedula","completo"
-"CLM-0052","fotos del siniestro","completo"
-"CLM-0052","factura/proforma","completo"
-"CLM-0052","informe tecnico","completo"
-"CLM-0053","formulario de reclamo","completo"
-"CLM-0053","cedula","completo"
-"CLM-0053","fotos del siniestro","completo"
-"CLM-0053","factura/proforma","completo"
-"CLM-0053","informe tecnico","completo"
-"CLM-0054","formulario de reclamo","completo"
-"CLM-0054","cedula","completo"
-"CLM-0054","fotos del siniestro","completo"
-"CLM-0054","factura/proforma","completo"
-"CLM-0054","informe tecnico","completo"
-"CLM-0055","formulario de reclamo","completo"
-"CLM-0055","cedula","completo"
-"CLM-0055","fotos del siniestro","completo"
-"CLM-0055","factura/proforma","completo"
-"CLM-0055","informe tecnico","completo"
-"CLM-0056","formulario de reclamo","completo"
-"CLM-0056","cedula","completo"
-"CLM-0056","fotos del siniestro","completo"
-"CLM-0056","factura/proforma","completo"
-"CLM-0056","informe tecnico","completo"
-"CLM-0057","formulario de reclamo","completo"
-"CLM-0057","cedula","completo"
-"CLM-0057","fotos del siniestro","completo"
-"CLM-0057","factura/proforma","completo"
-"CLM-0057","informe tecnico","completo"
-"CLM-0058","formulario de reclamo","completo"
-"CLM-0058","cedula","completo"
-"CLM-0058","fotos del siniestro","completo"
-"CLM-0058","factura/proforma","completo"
-"CLM-0058","informe tecnico","completo"
-"CLM-0059","formulario de reclamo","completo"
-"CLM-0059","cedula","completo"
-"CLM-0059","fotos del siniestro","completo"
-"CLM-0059","factura/proforma","completo"
-"CLM-0059","informe tecnico","completo"
-"CLM-0060","formulario de reclamo","completo"
-"CLM-0060","cedula","completo"
-"CLM-0060","fotos del siniestro","completo"
-"CLM-0060","factura/proforma","completo"
-"CLM-0060","informe tecnico","completo"
-"CLM-0061","formulario de reclamo","completo"
-"CLM-0061","cedula","completo"
-"CLM-0061","fotos del siniestro","completo"
-"CLM-0061","factura/proforma","completo"
-"CLM-0061","informe tecnico","completo"
-"CLM-0062","formulario de reclamo","completo"
-"CLM-0062","cedula","completo"
-"CLM-0062","fotos del siniestro","completo"
-"CLM-0062","factura/proforma","completo"
-"CLM-0062","informe tecnico","completo"
-"CLM-0063","formulario de reclamo","completo"
-"CLM-0063","cedula","completo"
-"CLM-0063","fotos del siniestro","completo"
-"CLM-0063","factura/proforma","completo"
-"CLM-0063","informe tecnico","completo"
-"CLM-0064","formulario de reclamo","completo"
-"CLM-0064","cedula","completo"
-"CLM-0064","fotos del siniestro","completo"
-"CLM-0064","factura/proforma","completo"
-"CLM-0064","informe tecnico","completo"
-"CLM-0065","formulario de reclamo","completo"
-"CLM-0065","cedula","completo"
-"CLM-0065","fotos del siniestro","completo"
-"CLM-0065","factura/proforma","completo"
-"CLM-0065","informe tecnico","completo"
-"CLM-0066","formulario de reclamo","completo"
-"CLM-0066","cedula","completo"
-"CLM-0066","fotos del siniestro","completo"
-"CLM-0066","factura/proforma","completo"
-"CLM-0066","informe tecnico","completo"
-"CLM-0067","formulario de reclamo","completo"
-"CLM-0067","cedula","completo"
-"CLM-0067","fotos del siniestro","completo"
-"CLM-0067","factura/proforma","completo"
-"CLM-0067","informe tecnico","completo"
-"CLM-0068","formulario de reclamo","completo"
-"CLM-0068","cedula","completo"
-"CLM-0068","fotos del siniestro","completo"
-"CLM-0068","factura/proforma","completo"
-"CLM-0068","informe tecnico","completo"
-"CLM-0069","formulario de reclamo","completo"
-"CLM-0069","cedula","completo"
-"CLM-0069","fotos del siniestro","completo"
-"CLM-0069","factura/proforma","completo"
-"CLM-0069","informe tecnico","completo"
-"CLM-0070","formulario de reclamo","completo"
-"CLM-0070","cedula","completo"
-"CLM-0070","fotos del siniestro","completo"
-"CLM-0070","factura/proforma","completo"
-"CLM-0070","informe tecnico","completo"
-"CLM-0071","formulario de reclamo","completo"
-"CLM-0071","cedula","completo"
-"CLM-0071","fotos del siniestro","completo"
-"CLM-0071","factura/proforma","completo"
-"CLM-0071","informe tecnico","completo"
-"CLM-0072","formulario de reclamo","completo"
-"CLM-0072","cedula","completo"
-"CLM-0072","fotos del siniestro","completo"
-"CLM-0072","factura/proforma","completo"
-"CLM-0072","informe tecnico","completo"
-"CLM-0073","formulario de reclamo","completo"
-"CLM-0073","cedula","completo"
-"CLM-0073","fotos del siniestro","completo"
-"CLM-0073","factura/proforma","completo"
-"CLM-0073","informe tecnico","completo"
-"CLM-0074","formulario de reclamo","completo"
-"CLM-0074","cedula","completo"
-"CLM-0074","fotos del siniestro","completo"
-"CLM-0074","factura/proforma","completo"
-"CLM-0074","informe tecnico","completo"
-"CLM-0075","formulario de reclamo","completo"
-"CLM-0075","cedula","completo"
-"CLM-0075","fotos del siniestro","completo"
-"CLM-0075","factura/proforma","completo"
-"CLM-0075","informe tecnico","completo"
-"CLM-0076","formulario de reclamo","completo"
-"CLM-0076","cedula","completo"
-"CLM-0076","fotos del siniestro","completo"
-"CLM-0076","factura/proforma","completo"
-"CLM-0076","informe tecnico","completo"
-"CLM-0077","formulario de reclamo","completo"
-"CLM-0077","cedula","completo"
-"CLM-0077","fotos del siniestro","completo"
-"CLM-0077","factura/proforma","completo"
-"CLM-0077","informe tecnico","completo"
-"CLM-0078","formulario de reclamo","completo"
-"CLM-0078","cedula","completo"
-"CLM-0078","fotos del siniestro","completo"
-"CLM-0078","factura/proforma","completo"
-"CLM-0078","informe tecnico","completo"
-"CLM-0079","formulario de reclamo","completo"
-"CLM-0079","cedula","completo"
-"CLM-0079","fotos del siniestro","completo"
-"CLM-0079","factura/proforma","completo"
-"CLM-0079","informe tecnico","completo"
-"CLM-0080","formulario de reclamo","completo"
-"CLM-0080","cedula","completo"
-"CLM-0080","fotos del siniestro","completo"
-"CLM-0080","factura/proforma","completo"
-"CLM-0080","informe tecnico","completo"
-"CLM-0081","formulario de reclamo","completo"
-"CLM-0081","cedula","completo"
-"CLM-0081","fotos del siniestro","completo"
-"CLM-0081","factura/proforma","completo"
-"CLM-0081","informe tecnico","completo"
-"CLM-0082","formulario de reclamo","completo"
-"CLM-0082","cedula","completo"
-"CLM-0082","fotos del siniestro","completo"
-"CLM-0082","factura/proforma","completo"
-"CLM-0082","informe tecnico","completo"
-"CLM-0083","formulario de reclamo","completo"
-"CLM-0083","cedula","completo"
-"CLM-0083","fotos del siniestro","completo"
-"CLM-0083","factura/proforma","completo"
-"CLM-0083","informe tecnico","completo"
-"CLM-0084","formulario de reclamo","completo"
-"CLM-0084","cedula","completo"
-"CLM-0084","fotos del siniestro","completo"
-"CLM-0084","factura/proforma","completo"
-"CLM-0084","informe tecnico","completo"
-"CLM-0085","formulario de reclamo","completo"
-"CLM-0085","cedula","completo"
-"CLM-0085","fotos del siniestro","completo"
-"CLM-0085","factura/proforma","completo"
-"CLM-0085","informe tecnico","completo"
-"CLM-0086","formulario de reclamo","completo"
-"CLM-0086","cedula","completo"
-"CLM-0086","fotos del siniestro","completo"
-"CLM-0086","factura/proforma","completo"
-"CLM-0086","informe tecnico","completo"
-"CLM-0087","formulario de reclamo","completo"
-"CLM-0087","cedula","completo"
-"CLM-0087","fotos del siniestro","faltante"
-"CLM-0087","factura/proforma","completo"
-"CLM-0087","informe tecnico","faltante"
-"CLM-0088","formulario de reclamo","completo"
-"CLM-0088","cedula","completo"
-"CLM-0088","fotos del siniestro","completo"
-"CLM-0088","factura/proforma","completo"
-"CLM-0088","informe tecnico","completo"
-"CLM-0089","formulario de reclamo","ilegible"
-"CLM-0089","cedula","completo"
-"CLM-0089","fotos del siniestro","completo"
-"CLM-0089","factura/proforma","completo"
-"CLM-0089","informe tecnico","completo"
-"CLM-0090","formulario de reclamo","completo"
-"CLM-0090","cedula","completo"
-"CLM-0090","fotos del siniestro","ilegible"
-"CLM-0090","factura/proforma","ilegible"
-"CLM-0090","informe tecnico","completo"
-"CLM-0091","formulario de reclamo","completo"
-"CLM-0091","cedula","completo"
-"CLM-0091","fotos del siniestro","completo"
-"CLM-0091","factura/proforma","completo"
-"CLM-0091","informe tecnico","completo"
-"CLM-0092","formulario de reclamo","completo"
-"CLM-0092","cedula","completo"
-"CLM-0092","fotos del siniestro","completo"
-"CLM-0092","factura/proforma","completo"
-"CLM-0092","informe tecnico","completo"
-"CLM-0093","formulario de reclamo","completo"
-"CLM-0093","cedula","completo"
-"CLM-0093","fotos del siniestro","completo"
-"CLM-0093","factura/proforma","ilegible"
-"CLM-0093","informe tecnico","completo"
-"CLM-0094","formulario de reclamo","completo"
-"CLM-0094","cedula","completo"
-"CLM-0094","fotos del siniestro","completo"
-"CLM-0094","factura/proforma","completo"
-"CLM-0094","informe tecnico","faltante"
-"CLM-0095","formulario de reclamo","completo"
-"CLM-0095","cedula","completo"
-"CLM-0095","fotos del siniestro","completo"
-"CLM-0095","factura/proforma","faltante"
-"CLM-0095","informe tecnico","completo"
-"CLM-0096","formulario de reclamo","ilegible"
-"CLM-0096","cedula","completo"
-"CLM-0096","fotos del siniestro","completo"
-"CLM-0096","factura/proforma","completo"
-"CLM-0096","informe tecnico","completo"
-"CLM-0097","formulario de reclamo","completo"
-"CLM-0097","cedula","completo"
-"CLM-0097","fotos del siniestro","completo"
-"CLM-0097","factura/proforma","completo"
-"CLM-0097","informe tecnico","completo"
-"CLM-0098","formulario de reclamo","completo"
-"CLM-0098","cedula","completo"
-"CLM-0098","fotos del siniestro","completo"
-"CLM-0098","factura/proforma","completo"
-"CLM-0098","informe tecnico","completo"
-"CLM-0099","formulario de reclamo","completo"
-"CLM-0099","cedula","completo"
-"CLM-0099","fotos del siniestro","completo"
-"CLM-0099","factura/proforma","completo"
-"CLM-0099","informe tecnico","faltante"
-"CLM-0100","formulario de reclamo","completo"
-"CLM-0100","cedula","completo"
-"CLM-0100","fotos del siniestro","completo"
-"CLM-0100","factura/proforma","completo"
-"CLM-0100","informe tecnico","faltante"
-"CLM-0101","formulario de reclamo","completo"
-"CLM-0101","cedula","completo"
-"CLM-0101","fotos del siniestro","completo"
-"CLM-0101","factura/proforma","completo"
-"CLM-0101","informe tecnico","completo"
-"CLM-0102","formulario de reclamo","completo"
-"CLM-0102","cedula","completo"
-"CLM-0102","fotos del siniestro","completo"
-"CLM-0102","factura/proforma","completo"
-"CLM-0102","informe tecnico","ilegible"
-"CLM-0103","formulario de reclamo","ilegible"
-"CLM-0103","cedula","completo"
-"CLM-0103","fotos del siniestro","ilegible"
-"CLM-0103","factura/proforma","completo"
-"CLM-0103","informe tecnico","completo"
-"CLM-0104","formulario de reclamo","completo"
-"CLM-0104","cedula","completo"
-"CLM-0104","fotos del siniestro","completo"
-"CLM-0104","factura/proforma","completo"
-"CLM-0104","informe tecnico","completo"
-"CLM-0105","formulario de reclamo","completo"
-"CLM-0105","cedula","completo"
-"CLM-0105","fotos del siniestro","completo"
-"CLM-0105","factura/proforma","completo"
-"CLM-0105","informe tecnico","completo"
-"CLM-0106","formulario de reclamo","completo"
-"CLM-0106","cedula","completo"
-"CLM-0106","fotos del siniestro","ilegible"
-"CLM-0106","factura/proforma","completo"
-"CLM-0106","informe tecnico","completo"
-"CLM-0107","formulario de reclamo","completo"
-"CLM-0107","cedula","completo"
-"CLM-0107","fotos del siniestro","completo"
-"CLM-0107","factura/proforma","completo"
-"CLM-0107","informe tecnico","ilegible"
-"CLM-0108","formulario de reclamo","completo"
-"CLM-0108","cedula","completo"
-"CLM-0108","fotos del siniestro","completo"
-"CLM-0108","factura/proforma","ilegible"
-"CLM-0108","informe tecnico","completo"
-"CLM-0109","formulario de reclamo","completo"
-"CLM-0109","cedula","completo"
-"CLM-0109","fotos del siniestro","ilegible"
-"CLM-0109","factura/proforma","completo"
-"CLM-0109","informe tecnico","completo"
-"CLM-0110","formulario de reclamo","completo"
-"CLM-0110","cedula","completo"
-"CLM-0110","fotos del siniestro","ilegible"
-"CLM-0110","factura/proforma","completo"
-"CLM-0110","informe tecnico","faltante"
-"CLM-0111","formulario de reclamo","completo"
-"CLM-0111","cedula","completo"
-"CLM-0111","fotos del siniestro","completo"
-"CLM-0111","factura/proforma","completo"
-"CLM-0111","informe tecnico","completo"
-"CLM-0112","formulario de reclamo","completo"
-"CLM-0112","cedula","ilegible"
-"CLM-0112","fotos del siniestro","completo"
-"CLM-0112","factura/proforma","completo"
-"CLM-0112","informe tecnico","completo"
-"CLM-0113","formulario de reclamo","completo"
-"CLM-0113","cedula","completo"
-"CLM-0113","fotos del siniestro","completo"
-"CLM-0113","factura/proforma","completo"
-"CLM-0113","informe tecnico","completo"
-"CLM-0114","formulario de reclamo","completo"
-"CLM-0114","cedula","completo"
-"CLM-0114","fotos del siniestro","ilegible"
-"CLM-0114","factura/proforma","completo"
-"CLM-0114","informe tecnico","completo"
-"CLM-0115","formulario de reclamo","completo"
-"CLM-0115","cedula","completo"
-"CLM-0115","fotos del siniestro","completo"
-"CLM-0115","factura/proforma","completo"
-"CLM-0115","informe tecnico","completo"
-"CLM-0116","formulario de reclamo","completo"
-"CLM-0116","cedula","completo"
-"CLM-0116","fotos del siniestro","completo"
-"CLM-0116","factura/proforma","completo"
-"CLM-0116","informe tecnico","completo"
-"CLM-0117","formulario de reclamo","completo"
-"CLM-0117","cedula","completo"
-"CLM-0117","fotos del siniestro","completo"
-"CLM-0117","factura/proforma","completo"
-"CLM-0117","informe tecnico","completo"
-"CLM-0118","formulario de reclamo","completo"
-"CLM-0118","cedula","completo"
-"CLM-0118","fotos del siniestro","completo"
-"CLM-0118","factura/proforma","completo"
-"CLM-0118","informe tecnico","completo"
-"CLM-0119","formulario de reclamo","completo"
-"CLM-0119","cedula","completo"
-"CLM-0119","fotos del siniestro","completo"
-"CLM-0119","factura/proforma","completo"
-"CLM-0119","informe tecnico","completo"
-"CLM-0120","formulario de reclamo","completo"
-"CLM-0120","cedula","completo"
-"CLM-0120","fotos del siniestro","completo"
-"CLM-0120","factura/proforma","completo"
-"CLM-0120","informe tecnico","completo"
-"CLM-0121","formulario de reclamo","completo"
-"CLM-0121","cedula","completo"
-"CLM-0121","fotos del siniestro","completo"
-"CLM-0121","factura/proforma","completo"
-"CLM-0121","informe tecnico","completo"
-"CLM-0122","formulario de reclamo","completo"
-"CLM-0122","cedula","completo"
-"CLM-0122","fotos del siniestro","completo"
-"CLM-0122","factura/proforma","completo"
-"CLM-0122","informe tecnico","completo"
-"CLM-0123","formulario de reclamo","completo"
-"CLM-0123","cedula","completo"
-"CLM-0123","fotos del siniestro","ilegible"
-"CLM-0123","factura/proforma","completo"
-"CLM-0123","informe tecnico","completo"
-"CLM-0124","formulario de reclamo","completo"
-"CLM-0124","cedula","completo"
-"CLM-0124","fotos del siniestro","completo"
-"CLM-0124","factura/proforma","ilegible"
-"CLM-0124","informe tecnico","completo"
-"CLM-0125","formulario de reclamo","completo"
-"CLM-0125","cedula","completo"
-"CLM-0125","fotos del siniestro","completo"
-"CLM-0125","factura/proforma","faltante"
-"CLM-0125","informe tecnico","completo"
-"CLM-0126","formulario de reclamo","completo"
-"CLM-0126","cedula","completo"
-"CLM-0126","fotos del siniestro","inconsistente"
-"CLM-0126","factura/proforma","completo"
-"CLM-0126","informe tecnico","completo"
-"CLM-0127","formulario de reclamo","completo"
-"CLM-0127","cedula","completo"
-"CLM-0127","fotos del siniestro","completo"
-"CLM-0127","factura/proforma","ilegible"
-"CLM-0127","informe tecnico","completo"
-"CLM-0128","formulario de reclamo","completo"
-"CLM-0128","cedula","completo"
-"CLM-0128","fotos del siniestro","completo"
-"CLM-0128","factura/proforma","completo"
-"CLM-0128","informe tecnico","completo"
-"CLM-0129","formulario de reclamo","completo"
-"CLM-0129","cedula","completo"
-"CLM-0129","fotos del siniestro","completo"
-"CLM-0129","factura/proforma","faltante"
-"CLM-0129","informe tecnico","completo"
-"CLM-0130","formulario de reclamo","completo"
-"CLM-0130","cedula","completo"
-"CLM-0130","fotos del siniestro","inconsistente"
-"CLM-0130","factura/proforma","ilegible"
-"CLM-0130","informe tecnico","completo"
-"CLM-0131","formulario de reclamo","completo"
-"CLM-0131","cedula","completo"
-"CLM-0131","fotos del siniestro","completo"
-"CLM-0131","factura/proforma","inconsistente"
-"CLM-0131","informe tecnico","completo"
-"CLM-0132","formulario de reclamo","completo"
-"CLM-0132","cedula","completo"
-"CLM-0132","fotos del siniestro","completo"
-"CLM-0132","factura/proforma","ilegible"
-"CLM-0132","informe tecnico","completo"
-"CLM-0133","formulario de reclamo","completo"
-"CLM-0133","cedula","inconsistente"
-"CLM-0133","fotos del siniestro","completo"
-"CLM-0133","factura/proforma","faltante"
-"CLM-0133","informe tecnico","completo"
-"CLM-0134","formulario de reclamo","completo"
-"CLM-0134","cedula","completo"
-"CLM-0134","fotos del siniestro","completo"
-"CLM-0134","factura/proforma","completo"
-"CLM-0134","informe tecnico","completo"
-"CLM-0135","formulario de reclamo","completo"
-"CLM-0135","cedula","completo"
-"CLM-0135","fotos del siniestro","completo"
-"CLM-0135","factura/proforma","completo"
-"CLM-0135","informe tecnico","completo"
-"CLM-0136","formulario de reclamo","completo"
-"CLM-0136","cedula","faltante"
-"CLM-0136","fotos del siniestro","completo"
-"CLM-0136","factura/proforma","completo"
-"CLM-0136","informe tecnico","completo"
-"CLM-0137","formulario de reclamo","faltante"
-"CLM-0137","cedula","completo"
-"CLM-0137","fotos del siniestro","completo"
-"CLM-0137","factura/proforma","completo"
-"CLM-0137","informe tecnico","completo"
-"CLM-0138","formulario de reclamo","inconsistente"
-"CLM-0138","cedula","completo"
-"CLM-0138","fotos del siniestro","completo"
-"CLM-0138","factura/proforma","completo"
-"CLM-0138","informe tecnico","completo"
-"CLM-0139","formulario de reclamo","completo"
-"CLM-0139","cedula","completo"
-"CLM-0139","fotos del siniestro","completo"
-"CLM-0139","factura/proforma","completo"
-"CLM-0139","informe tecnico","completo"
-"CLM-0140","formulario de reclamo","completo"
-"CLM-0140","cedula","completo"
-"CLM-0140","fotos del siniestro","completo"
-"CLM-0140","factura/proforma","completo"
-"CLM-0140","informe tecnico","faltante"
-"CLM-0141","formulario de reclamo","completo"
-"CLM-0141","cedula","completo"
-"CLM-0141","fotos del siniestro","ilegible"
-"CLM-0141","factura/proforma","completo"
-"CLM-0141","informe tecnico","completo"
-"CLM-0142","formulario de reclamo","completo"
-"CLM-0142","cedula","ilegible"
-"CLM-0142","fotos del siniestro","completo"
-"CLM-0142","factura/proforma","completo"
-"CLM-0142","informe tecnico","completo"
-"CLM-0143","formulario de reclamo","completo"
-"CLM-0143","cedula","completo"
-"CLM-0143","fotos del siniestro","faltante"
-"CLM-0143","factura/proforma","completo"
-"CLM-0143","informe tecnico","ilegible"
-"CLM-0144","formulario de reclamo","completo"
-"CLM-0144","cedula","completo"
-"CLM-0144","fotos del siniestro","completo"
-"CLM-0144","factura/proforma","completo"
-"CLM-0144","informe tecnico","completo"
-"CLM-0145","formulario de reclamo","completo"
-"CLM-0145","cedula","completo"
-"CLM-0145","fotos del siniestro","completo"
-"CLM-0145","factura/proforma","completo"
-"CLM-0145","informe tecnico","completo"
-"CLM-0146","formulario de reclamo","completo"
-"CLM-0146","cedula","completo"
-"CLM-0146","fotos del siniestro","completo"
-"CLM-0146","factura/proforma","inconsistente"
-"CLM-0146","informe tecnico","faltante"
-"CLM-0147","formulario de reclamo","completo"
-"CLM-0147","cedula","completo"
-"CLM-0147","fotos del siniestro","completo"
-"CLM-0147","factura/proforma","ilegible"
-"CLM-0147","informe tecnico","completo"
-"CLM-0148","formulario de reclamo","completo"
-"CLM-0148","cedula","completo"
-"CLM-0148","fotos del siniestro","completo"
-"CLM-0148","factura/proforma","completo"
-"CLM-0148","informe tecnico","completo"
-"CLM-0149","formulario de reclamo","completo"
-"CLM-0149","cedula","completo"
-"CLM-0149","fotos del siniestro","completo"
-"CLM-0149","factura/proforma","completo"
-"CLM-0149","informe tecnico","completo"
-"CLM-0150","formulario de reclamo","completo"
-"CLM-0150","cedula","completo"
-"CLM-0150","fotos del siniestro","completo"
-"CLM-0150","factura/proforma","completo"
-"CLM-0150","informe tecnico","completo"
-"CLM-0151","formulario de reclamo","completo"
-"CLM-0151","cedula","completo"
-"CLM-0151","fotos del siniestro","ilegible"
-"CLM-0151","factura/proforma","completo"
-"CLM-0151","informe tecnico","completo"
-"CLM-0152","formulario de reclamo","completo"
-"CLM-0152","cedula","completo"
-"CLM-0152","fotos del siniestro","completo"
-"CLM-0152","factura/proforma","completo"
-"CLM-0152","informe tecnico","completo"
-"CLM-0153","formulario de reclamo","completo"
-"CLM-0153","cedula","completo"
-"CLM-0153","fotos del siniestro","completo"
-"CLM-0153","factura/proforma","completo"
-"CLM-0153","informe tecnico","faltante"
-"CLM-0154","formulario de reclamo","completo"
-"CLM-0154","cedula","completo"
-"CLM-0154","fotos del siniestro","completo"
-"CLM-0154","factura/proforma","completo"
-"CLM-0154","informe tecnico","completo"
-"CLM-0155","formulario de reclamo","completo"
-"CLM-0155","cedula","inconsistente"
-"CLM-0155","fotos del siniestro","completo"
-"CLM-0155","factura/proforma","completo"
-"CLM-0155","informe tecnico","completo"
-"CLM-0156","formulario de reclamo","completo"
-"CLM-0156","cedula","completo"
-"CLM-0156","fotos del siniestro","completo"
-"CLM-0156","factura/proforma","ilegible"
-"CLM-0156","informe tecnico","completo"
-"CLM-0157","formulario de reclamo","completo"
-"CLM-0157","cedula","completo"
-"CLM-0157","fotos del siniestro","faltante"
-"CLM-0157","factura/proforma","completo"
-"CLM-0157","informe tecnico","completo"
-"CLM-0158","formulario de reclamo","completo"
-"CLM-0158","cedula","completo"
-"CLM-0158","fotos del siniestro","completo"
-"CLM-0158","factura/proforma","completo"
-"CLM-0158","informe tecnico","completo"
-"CLM-0159","formulario de reclamo","completo"
-"CLM-0159","cedula","completo"
-"CLM-0159","fotos del siniestro","completo"
-"CLM-0159","factura/proforma","completo"
-"CLM-0159","informe tecnico","completo"
-"CLM-0160","formulario de reclamo","inconsistente"
-"CLM-0160","cedula","completo"
-"CLM-0160","fotos del siniestro","completo"
-"CLM-0160","factura/proforma","completo"
-"CLM-0160","informe tecnico","completo"
+claim_id,document_type,status
+CLM-0001,formulario de reclamo,completo
+CLM-0001,cedula,completo
+CLM-0001,fotos del siniestro,completo
+CLM-0001,factura/proforma,completo
+CLM-0001,informe tecnico,completo
+CLM-0002,formulario de reclamo,completo
+CLM-0002,cedula,completo
+CLM-0002,fotos del siniestro,completo
+CLM-0002,factura/proforma,completo
+CLM-0002,informe tecnico,completo
+CLM-0003,formulario de reclamo,completo
+CLM-0003,cedula,completo
+CLM-0003,fotos del siniestro,completo
+CLM-0003,factura/proforma,completo
+CLM-0003,informe tecnico,completo
+CLM-0004,formulario de reclamo,completo
+CLM-0004,cedula,completo
+CLM-0004,fotos del siniestro,completo
+CLM-0004,factura/proforma,completo
+CLM-0004,informe tecnico,completo
+CLM-0005,formulario de reclamo,completo
+CLM-0005,cedula,completo
+CLM-0005,fotos del siniestro,completo
+CLM-0005,factura/proforma,completo
+CLM-0005,informe tecnico,completo
+CLM-0006,formulario de reclamo,completo
+CLM-0006,cedula,completo
+CLM-0006,fotos del siniestro,completo
+CLM-0006,factura/proforma,completo
+CLM-0006,informe tecnico,completo
+CLM-0007,formulario de reclamo,completo
+CLM-0007,cedula,completo
+CLM-0007,fotos del siniestro,completo
+CLM-0007,factura/proforma,completo
+CLM-0007,informe tecnico,completo
+CLM-0008,formulario de reclamo,completo
+CLM-0008,cedula,completo
+CLM-0008,fotos del siniestro,completo
+CLM-0008,factura/proforma,completo
+CLM-0008,informe tecnico,completo
+CLM-0009,formulario de reclamo,completo
+CLM-0009,cedula,completo
+CLM-0009,fotos del siniestro,completo
+CLM-0009,factura/proforma,completo
+CLM-0009,informe tecnico,completo
+CLM-0010,formulario de reclamo,completo
+CLM-0010,cedula,completo
+CLM-0010,fotos del siniestro,completo
+CLM-0010,factura/proforma,completo
+CLM-0010,informe tecnico,completo
+CLM-0011,formulario de reclamo,completo
+CLM-0011,cedula,completo
+CLM-0011,fotos del siniestro,completo
+CLM-0011,factura/proforma,completo
+CLM-0011,informe tecnico,completo
+CLM-0012,formulario de reclamo,completo
+CLM-0012,cedula,completo
+CLM-0012,fotos del siniestro,completo
+CLM-0012,factura/proforma,completo
+CLM-0012,informe tecnico,completo
+CLM-0013,formulario de reclamo,completo
+CLM-0013,cedula,completo
+CLM-0013,fotos del siniestro,completo
+CLM-0013,factura/proforma,completo
+CLM-0013,informe tecnico,completo
+CLM-0014,formulario de reclamo,completo
+CLM-0014,cedula,completo
+CLM-0014,fotos del siniestro,completo
+CLM-0014,factura/proforma,completo
+CLM-0014,informe tecnico,completo
+CLM-0015,formulario de reclamo,completo
+CLM-0015,cedula,completo
+CLM-0015,fotos del siniestro,completo
+CLM-0015,factura/proforma,completo
+CLM-0015,informe tecnico,completo
+CLM-0016,formulario de reclamo,completo
+CLM-0016,cedula,completo
+CLM-0016,fotos del siniestro,completo
+CLM-0016,factura/proforma,completo
+CLM-0016,informe tecnico,completo
+CLM-0017,formulario de reclamo,completo
+CLM-0017,cedula,completo
+CLM-0017,fotos del siniestro,completo
+CLM-0017,factura/proforma,completo
+CLM-0017,informe tecnico,completo
+CLM-0018,formulario de reclamo,completo
+CLM-0018,cedula,completo
+CLM-0018,fotos del siniestro,completo
+CLM-0018,factura/proforma,completo
+CLM-0018,informe tecnico,completo
+CLM-0019,formulario de reclamo,completo
+CLM-0019,cedula,completo
+CLM-0019,fotos del siniestro,completo
+CLM-0019,factura/proforma,completo
+CLM-0019,informe tecnico,completo
+CLM-0020,formulario de reclamo,completo
+CLM-0020,cedula,completo
+CLM-0020,fotos del siniestro,completo
+CLM-0020,factura/proforma,completo
+CLM-0020,informe tecnico,completo
+CLM-0021,formulario de reclamo,completo
+CLM-0021,cedula,completo
+CLM-0021,fotos del siniestro,completo
+CLM-0021,factura/proforma,completo
+CLM-0021,informe tecnico,completo
+CLM-0022,formulario de reclamo,completo
+CLM-0022,cedula,completo
+CLM-0022,fotos del siniestro,completo
+CLM-0022,factura/proforma,completo
+CLM-0022,informe tecnico,completo
+CLM-0023,formulario de reclamo,completo
+CLM-0023,cedula,completo
+CLM-0023,fotos del siniestro,completo
+CLM-0023,factura/proforma,completo
+CLM-0023,informe tecnico,completo
+CLM-0024,formulario de reclamo,completo
+CLM-0024,cedula,completo
+CLM-0024,fotos del siniestro,completo
+CLM-0024,factura/proforma,completo
+CLM-0024,informe tecnico,completo
+CLM-0025,formulario de reclamo,completo
+CLM-0025,cedula,completo
+CLM-0025,fotos del siniestro,completo
+CLM-0025,factura/proforma,completo
+CLM-0025,informe tecnico,completo
+CLM-0026,formulario de reclamo,completo
+CLM-0026,cedula,completo
+CLM-0026,fotos del siniestro,completo
+CLM-0026,factura/proforma,completo
+CLM-0026,informe tecnico,completo
+CLM-0027,formulario de reclamo,completo
+CLM-0027,cedula,completo
+CLM-0027,fotos del siniestro,completo
+CLM-0027,factura/proforma,completo
+CLM-0027,informe tecnico,completo
+CLM-0028,formulario de reclamo,completo
+CLM-0028,cedula,completo
+CLM-0028,fotos del siniestro,completo
+CLM-0028,factura/proforma,completo
+CLM-0028,informe tecnico,completo
+CLM-0029,formulario de reclamo,completo
+CLM-0029,cedula,completo
+CLM-0029,fotos del siniestro,completo
+CLM-0029,factura/proforma,completo
+CLM-0029,informe tecnico,completo
+CLM-0030,formulario de reclamo,completo
+CLM-0030,cedula,completo
+CLM-0030,fotos del siniestro,completo
+CLM-0030,factura/proforma,completo
+CLM-0030,informe tecnico,completo
+CLM-0031,formulario de reclamo,completo
+CLM-0031,cedula,completo
+CLM-0031,fotos del siniestro,completo
+CLM-0031,factura/proforma,completo
+CLM-0031,informe tecnico,completo
+CLM-0032,formulario de reclamo,completo
+CLM-0032,cedula,completo
+CLM-0032,fotos del siniestro,completo
+CLM-0032,factura/proforma,completo
+CLM-0032,informe tecnico,completo
+CLM-0033,formulario de reclamo,completo
+CLM-0033,cedula,completo
+CLM-0033,fotos del siniestro,completo
+CLM-0033,factura/proforma,completo
+CLM-0033,informe tecnico,completo
+CLM-0034,formulario de reclamo,completo
+CLM-0034,cedula,completo
+CLM-0034,fotos del siniestro,completo
+CLM-0034,factura/proforma,completo
+CLM-0034,informe tecnico,completo
+CLM-0035,formulario de reclamo,completo
+CLM-0035,cedula,completo
+CLM-0035,fotos del siniestro,completo
+CLM-0035,factura/proforma,completo
+CLM-0035,informe tecnico,completo
+CLM-0036,formulario de reclamo,completo
+CLM-0036,cedula,completo
+CLM-0036,fotos del siniestro,completo
+CLM-0036,factura/proforma,completo
+CLM-0036,informe tecnico,completo
+CLM-0037,formulario de reclamo,completo
+CLM-0037,cedula,completo
+CLM-0037,fotos del siniestro,completo
+CLM-0037,factura/proforma,completo
+CLM-0037,informe tecnico,completo
+CLM-0038,formulario de reclamo,completo
+CLM-0038,cedula,completo
+CLM-0038,fotos del siniestro,completo
+CLM-0038,factura/proforma,completo
+CLM-0038,informe tecnico,completo
+CLM-0039,formulario de reclamo,completo
+CLM-0039,cedula,completo
+CLM-0039,fotos del siniestro,completo
+CLM-0039,factura/proforma,completo
+CLM-0039,informe tecnico,completo
+CLM-0040,formulario de reclamo,completo
+CLM-0040,cedula,completo
+CLM-0040,fotos del siniestro,completo
+CLM-0040,factura/proforma,completo
+CLM-0040,informe tecnico,completo
+CLM-0041,formulario de reclamo,completo
+CLM-0041,cedula,completo
+CLM-0041,fotos del siniestro,completo
+CLM-0041,factura/proforma,completo
+CLM-0041,informe tecnico,completo
+CLM-0042,formulario de reclamo,completo
+CLM-0042,cedula,completo
+CLM-0042,fotos del siniestro,completo
+CLM-0042,factura/proforma,completo
+CLM-0042,informe tecnico,completo
+CLM-0043,formulario de reclamo,completo
+CLM-0043,cedula,completo
+CLM-0043,fotos del siniestro,completo
+CLM-0043,factura/proforma,completo
+CLM-0043,informe tecnico,completo
+CLM-0044,formulario de reclamo,completo
+CLM-0044,cedula,completo
+CLM-0044,fotos del siniestro,completo
+CLM-0044,factura/proforma,completo
+CLM-0044,informe tecnico,completo
+CLM-0045,formulario de reclamo,completo
+CLM-0045,cedula,completo
+CLM-0045,fotos del siniestro,completo
+CLM-0045,factura/proforma,completo
+CLM-0045,informe tecnico,completo
+CLM-0046,formulario de reclamo,completo
+CLM-0046,cedula,completo
+CLM-0046,fotos del siniestro,completo
+CLM-0046,factura/proforma,completo
+CLM-0046,informe tecnico,completo
+CLM-0047,formulario de reclamo,completo
+CLM-0047,cedula,completo
+CLM-0047,fotos del siniestro,completo
+CLM-0047,factura/proforma,completo
+CLM-0047,informe tecnico,completo
+CLM-0048,formulario de reclamo,completo
+CLM-0048,cedula,completo
+CLM-0048,fotos del siniestro,completo
+CLM-0048,factura/proforma,completo
+CLM-0048,informe tecnico,completo
+CLM-0049,formulario de reclamo,completo
+CLM-0049,cedula,completo
+CLM-0049,fotos del siniestro,completo
+CLM-0049,factura/proforma,completo
+CLM-0049,informe tecnico,completo
+CLM-0050,formulario de reclamo,completo
+CLM-0050,cedula,completo
+CLM-0050,fotos del siniestro,completo
+CLM-0050,factura/proforma,completo
+CLM-0050,informe tecnico,completo
+CLM-0051,formulario de reclamo,completo
+CLM-0051,cedula,completo
+CLM-0051,fotos del siniestro,completo
+CLM-0051,factura/proforma,completo
+CLM-0051,informe tecnico,completo
+CLM-0052,formulario de reclamo,completo
+CLM-0052,cedula,completo
+CLM-0052,fotos del siniestro,completo
+CLM-0052,factura/proforma,completo
+CLM-0052,informe tecnico,completo
+CLM-0053,formulario de reclamo,completo
+CLM-0053,cedula,completo
+CLM-0053,fotos del siniestro,completo
+CLM-0053,factura/proforma,completo
+CLM-0053,informe tecnico,completo
+CLM-0054,formulario de reclamo,completo
+CLM-0054,cedula,completo
+CLM-0054,fotos del siniestro,completo
+CLM-0054,factura/proforma,completo
+CLM-0054,informe tecnico,completo
+CLM-0055,formulario de reclamo,completo
+CLM-0055,cedula,completo
+CLM-0055,fotos del siniestro,completo
+CLM-0055,factura/proforma,completo
+CLM-0055,informe tecnico,completo
+CLM-0056,formulario de reclamo,completo
+CLM-0056,cedula,completo
+CLM-0056,fotos del siniestro,completo
+CLM-0056,factura/proforma,completo
+CLM-0056,informe tecnico,completo
+CLM-0057,formulario de reclamo,completo
+CLM-0057,cedula,completo
+CLM-0057,fotos del siniestro,completo
+CLM-0057,factura/proforma,completo
+CLM-0057,informe tecnico,completo
+CLM-0058,formulario de reclamo,completo
+CLM-0058,cedula,completo
+CLM-0058,fotos del siniestro,completo
+CLM-0058,factura/proforma,completo
+CLM-0058,informe tecnico,completo
+CLM-0059,formulario de reclamo,completo
+CLM-0059,cedula,completo
+CLM-0059,fotos del siniestro,completo
+CLM-0059,factura/proforma,completo
+CLM-0059,informe tecnico,completo
+CLM-0060,formulario de reclamo,completo
+CLM-0060,cedula,completo
+CLM-0060,fotos del siniestro,completo
+CLM-0060,factura/proforma,completo
+CLM-0060,informe tecnico,completo
+CLM-0061,formulario de reclamo,completo
+CLM-0061,cedula,completo
+CLM-0061,fotos del siniestro,completo
+CLM-0061,factura/proforma,completo
+CLM-0061,informe tecnico,completo
+CLM-0062,formulario de reclamo,completo
+CLM-0062,cedula,completo
+CLM-0062,fotos del siniestro,completo
+CLM-0062,factura/proforma,completo
+CLM-0062,informe tecnico,completo
+CLM-0063,formulario de reclamo,completo
+CLM-0063,cedula,completo
+CLM-0063,fotos del siniestro,completo
+CLM-0063,factura/proforma,completo
+CLM-0063,informe tecnico,completo
+CLM-0064,formulario de reclamo,completo
+CLM-0064,cedula,completo
+CLM-0064,fotos del siniestro,completo
+CLM-0064,factura/proforma,completo
+CLM-0064,informe tecnico,completo
+CLM-0065,formulario de reclamo,completo
+CLM-0065,cedula,completo
+CLM-0065,fotos del siniestro,completo
+CLM-0065,factura/proforma,completo
+CLM-0065,informe tecnico,completo
+CLM-0066,formulario de reclamo,completo
+CLM-0066,cedula,completo
+CLM-0066,fotos del siniestro,completo
+CLM-0066,factura/proforma,completo
+CLM-0066,informe tecnico,completo
+CLM-0067,formulario de reclamo,completo
+CLM-0067,cedula,completo
+CLM-0067,fotos del siniestro,completo
+CLM-0067,factura/proforma,completo
+CLM-0067,informe tecnico,completo
+CLM-0068,formulario de reclamo,completo
+CLM-0068,cedula,completo
+CLM-0068,fotos del siniestro,completo
+CLM-0068,factura/proforma,completo
+CLM-0068,informe tecnico,completo
+CLM-0069,formulario de reclamo,completo
+CLM-0069,cedula,completo
+CLM-0069,fotos del siniestro,completo
+CLM-0069,factura/proforma,completo
+CLM-0069,informe tecnico,completo
+CLM-0070,formulario de reclamo,completo
+CLM-0070,cedula,completo
+CLM-0070,fotos del siniestro,completo
+CLM-0070,factura/proforma,completo
+CLM-0070,informe tecnico,completo
+CLM-0071,formulario de reclamo,completo
+CLM-0071,cedula,completo
+CLM-0071,fotos del siniestro,completo
+CLM-0071,factura/proforma,completo
+CLM-0071,informe tecnico,completo
+CLM-0072,formulario de reclamo,completo
+CLM-0072,cedula,completo
+CLM-0072,fotos del siniestro,completo
+CLM-0072,factura/proforma,completo
+CLM-0072,informe tecnico,completo
+CLM-0073,formulario de reclamo,completo
+CLM-0073,cedula,completo
+CLM-0073,fotos del siniestro,completo
+CLM-0073,factura/proforma,completo
+CLM-0073,informe tecnico,completo
+CLM-0074,formulario de reclamo,completo
+CLM-0074,cedula,completo
+CLM-0074,fotos del siniestro,completo
+CLM-0074,factura/proforma,completo
+CLM-0074,informe tecnico,completo
+CLM-0075,formulario de reclamo,completo
+CLM-0075,cedula,completo
+CLM-0075,fotos del siniestro,completo
+CLM-0075,factura/proforma,completo
+CLM-0075,informe tecnico,completo
+CLM-0076,formulario de reclamo,completo
+CLM-0076,cedula,completo
+CLM-0076,fotos del siniestro,completo
+CLM-0076,factura/proforma,completo
+CLM-0076,informe tecnico,completo
+CLM-0077,formulario de reclamo,completo
+CLM-0077,cedula,completo
+CLM-0077,fotos del siniestro,completo
+CLM-0077,factura/proforma,completo
+CLM-0077,informe tecnico,completo
+CLM-0078,formulario de reclamo,completo
+CLM-0078,cedula,completo
+CLM-0078,fotos del siniestro,completo
+CLM-0078,factura/proforma,completo
+CLM-0078,informe tecnico,completo
+CLM-0079,formulario de reclamo,completo
+CLM-0079,cedula,completo
+CLM-0079,fotos del siniestro,completo
+CLM-0079,factura/proforma,completo
+CLM-0079,informe tecnico,completo
+CLM-0080,formulario de reclamo,completo
+CLM-0080,cedula,completo
+CLM-0080,fotos del siniestro,completo
+CLM-0080,factura/proforma,completo
+CLM-0080,informe tecnico,completo
+CLM-0081,formulario de reclamo,completo
+CLM-0081,cedula,completo
+CLM-0081,fotos del siniestro,completo
+CLM-0081,factura/proforma,completo
+CLM-0081,informe tecnico,completo
+CLM-0082,formulario de reclamo,completo
+CLM-0082,cedula,completo
+CLM-0082,fotos del siniestro,completo
+CLM-0082,factura/proforma,completo
+CLM-0082,informe tecnico,completo
+CLM-0083,formulario de reclamo,completo
+CLM-0083,cedula,completo
+CLM-0083,fotos del siniestro,completo
+CLM-0083,factura/proforma,completo
+CLM-0083,informe tecnico,completo
+CLM-0084,formulario de reclamo,completo
+CLM-0084,cedula,completo
+CLM-0084,fotos del siniestro,completo
+CLM-0084,factura/proforma,completo
+CLM-0084,informe tecnico,completo
+CLM-0085,formulario de reclamo,completo
+CLM-0085,cedula,completo
+CLM-0085,fotos del siniestro,completo
+CLM-0085,factura/proforma,completo
+CLM-0085,informe tecnico,completo
+CLM-0086,formulario de reclamo,completo
+CLM-0086,cedula,completo
+CLM-0086,fotos del siniestro,completo
+CLM-0086,factura/proforma,completo
+CLM-0086,informe tecnico,completo
+CLM-0087,formulario de reclamo,completo
+CLM-0087,cedula,completo
+CLM-0087,fotos del siniestro,faltante
+CLM-0087,factura/proforma,completo
+CLM-0087,informe tecnico,faltante
+CLM-0088,formulario de reclamo,completo
+CLM-0088,cedula,completo
+CLM-0088,fotos del siniestro,completo
+CLM-0088,factura/proforma,completo
+CLM-0088,informe tecnico,completo
+CLM-0089,formulario de reclamo,ilegible
+CLM-0089,cedula,completo
+CLM-0089,fotos del siniestro,completo
+CLM-0089,factura/proforma,completo
+CLM-0089,informe tecnico,completo
+CLM-0090,formulario de reclamo,completo
+CLM-0090,cedula,completo
+CLM-0090,fotos del siniestro,ilegible
+CLM-0090,factura/proforma,ilegible
+CLM-0090,informe tecnico,completo
+CLM-0091,formulario de reclamo,completo
+CLM-0091,cedula,completo
+CLM-0091,fotos del siniestro,completo
+CLM-0091,factura/proforma,completo
+CLM-0091,informe tecnico,completo
+CLM-0092,formulario de reclamo,completo
+CLM-0092,cedula,completo
+CLM-0092,fotos del siniestro,completo
+CLM-0092,factura/proforma,completo
+CLM-0092,informe tecnico,completo
+CLM-0093,formulario de reclamo,completo
+CLM-0093,cedula,completo
+CLM-0093,fotos del siniestro,completo
+CLM-0093,factura/proforma,ilegible
+CLM-0093,informe tecnico,completo
+CLM-0094,formulario de reclamo,completo
+CLM-0094,cedula,completo
+CLM-0094,fotos del siniestro,completo
+CLM-0094,factura/proforma,completo
+CLM-0094,informe tecnico,faltante
+CLM-0095,formulario de reclamo,completo
+CLM-0095,cedula,completo
+CLM-0095,fotos del siniestro,completo
+CLM-0095,factura/proforma,faltante
+CLM-0095,informe tecnico,completo
+CLM-0096,formulario de reclamo,ilegible
+CLM-0096,cedula,completo
+CLM-0096,fotos del siniestro,completo
+CLM-0096,factura/proforma,completo
+CLM-0096,informe tecnico,completo
+CLM-0097,formulario de reclamo,completo
+CLM-0097,cedula,completo
+CLM-0097,fotos del siniestro,completo
+CLM-0097,factura/proforma,completo
+CLM-0097,informe tecnico,completo
+CLM-0098,formulario de reclamo,completo
+CLM-0098,cedula,completo
+CLM-0098,fotos del siniestro,completo
+CLM-0098,factura/proforma,completo
+CLM-0098,informe tecnico,completo
+CLM-0099,formulario de reclamo,completo
+CLM-0099,cedula,completo
+CLM-0099,fotos del siniestro,completo
+CLM-0099,factura/proforma,completo
+CLM-0099,informe tecnico,faltante
+CLM-0100,formulario de reclamo,completo
+CLM-0100,cedula,completo
+CLM-0100,fotos del siniestro,completo
+CLM-0100,factura/proforma,completo
+CLM-0100,informe tecnico,faltante
+CLM-0101,formulario de reclamo,completo
+CLM-0101,cedula,completo
+CLM-0101,fotos del siniestro,completo
+CLM-0101,factura/proforma,completo
+CLM-0101,informe tecnico,completo
+CLM-0102,formulario de reclamo,completo
+CLM-0102,cedula,completo
+CLM-0102,fotos del siniestro,completo
+CLM-0102,factura/proforma,completo
+CLM-0102,informe tecnico,ilegible
+CLM-0103,formulario de reclamo,ilegible
+CLM-0103,cedula,completo
+CLM-0103,fotos del siniestro,ilegible
+CLM-0103,factura/proforma,completo
+CLM-0103,informe tecnico,completo
+CLM-0104,formulario de reclamo,completo
+CLM-0104,cedula,completo
+CLM-0104,fotos del siniestro,completo
+CLM-0104,factura/proforma,completo
+CLM-0104,informe tecnico,completo
+CLM-0105,formulario de reclamo,completo
+CLM-0105,cedula,completo
+CLM-0105,fotos del siniestro,completo
+CLM-0105,factura/proforma,completo
+CLM-0105,informe tecnico,completo
+CLM-0106,formulario de reclamo,completo
+CLM-0106,cedula,completo
+CLM-0106,fotos del siniestro,ilegible
+CLM-0106,factura/proforma,completo
+CLM-0106,informe tecnico,completo
+CLM-0107,formulario de reclamo,completo
+CLM-0107,cedula,completo
+CLM-0107,fotos del siniestro,completo
+CLM-0107,factura/proforma,completo
+CLM-0107,informe tecnico,ilegible
+CLM-0108,formulario de reclamo,completo
+CLM-0108,cedula,completo
+CLM-0108,fotos del siniestro,completo
+CLM-0108,factura/proforma,ilegible
+CLM-0108,informe tecnico,completo
+CLM-0109,formulario de reclamo,completo
+CLM-0109,cedula,completo
+CLM-0109,fotos del siniestro,ilegible
+CLM-0109,factura/proforma,completo
+CLM-0109,informe tecnico,completo
+CLM-0110,formulario de reclamo,completo
+CLM-0110,cedula,completo
+CLM-0110,fotos del siniestro,ilegible
+CLM-0110,factura/proforma,completo
+CLM-0110,informe tecnico,faltante
+CLM-0111,formulario de reclamo,completo
+CLM-0111,cedula,completo
+CLM-0111,fotos del siniestro,completo
+CLM-0111,factura/proforma,completo
+CLM-0111,informe tecnico,completo
+CLM-0112,formulario de reclamo,completo
+CLM-0112,cedula,ilegible
+CLM-0112,fotos del siniestro,completo
+CLM-0112,factura/proforma,completo
+CLM-0112,informe tecnico,completo
+CLM-0113,formulario de reclamo,completo
+CLM-0113,cedula,completo
+CLM-0113,fotos del siniestro,completo
+CLM-0113,factura/proforma,completo
+CLM-0113,informe tecnico,completo
+CLM-0114,formulario de reclamo,completo
+CLM-0114,cedula,completo
+CLM-0114,fotos del siniestro,ilegible
+CLM-0114,factura/proforma,completo
+CLM-0114,informe tecnico,completo
+CLM-0115,formulario de reclamo,completo
+CLM-0115,cedula,completo
+CLM-0115,fotos del siniestro,completo
+CLM-0115,factura/proforma,completo
+CLM-0115,informe tecnico,completo
+CLM-0116,formulario de reclamo,completo
+CLM-0116,cedula,completo
+CLM-0116,fotos del siniestro,completo
+CLM-0116,factura/proforma,completo
+CLM-0116,informe tecnico,completo
+CLM-0117,formulario de reclamo,completo
+CLM-0117,cedula,completo
+CLM-0117,fotos del siniestro,completo
+CLM-0117,factura/proforma,completo
+CLM-0117,informe tecnico,completo
+CLM-0118,formulario de reclamo,completo
+CLM-0118,cedula,completo
+CLM-0118,fotos del siniestro,completo
+CLM-0118,factura/proforma,completo
+CLM-0118,informe tecnico,completo
+CLM-0119,formulario de reclamo,completo
+CLM-0119,cedula,completo
+CLM-0119,fotos del siniestro,completo
+CLM-0119,factura/proforma,completo
+CLM-0119,informe tecnico,completo
+CLM-0120,formulario de reclamo,completo
+CLM-0120,cedula,completo
+CLM-0120,fotos del siniestro,completo
+CLM-0120,factura/proforma,completo
+CLM-0120,informe tecnico,completo
+CLM-0121,formulario de reclamo,completo
+CLM-0121,cedula,completo
+CLM-0121,fotos del siniestro,completo
+CLM-0121,factura/proforma,completo
+CLM-0121,informe tecnico,completo
+CLM-0122,formulario de reclamo,completo
+CLM-0122,cedula,completo
+CLM-0122,fotos del siniestro,completo
+CLM-0122,factura/proforma,completo
+CLM-0122,informe tecnico,completo
+CLM-0123,formulario de reclamo,completo
+CLM-0123,cedula,completo
+CLM-0123,fotos del siniestro,ilegible
+CLM-0123,factura/proforma,completo
+CLM-0123,informe tecnico,completo
+CLM-0124,formulario de reclamo,completo
+CLM-0124,cedula,completo
+CLM-0124,fotos del siniestro,completo
+CLM-0124,factura/proforma,ilegible
+CLM-0124,informe tecnico,completo
+CLM-0125,formulario de reclamo,completo
+CLM-0125,cedula,completo
+CLM-0125,fotos del siniestro,completo
+CLM-0125,factura/proforma,faltante
+CLM-0125,informe tecnico,completo
+CLM-0126,formulario de reclamo,completo
+CLM-0126,cedula,completo
+CLM-0126,fotos del siniestro,inconsistente
+CLM-0126,factura/proforma,completo
+CLM-0126,informe tecnico,completo
+CLM-0127,formulario de reclamo,completo
+CLM-0127,cedula,completo
+CLM-0127,fotos del siniestro,completo
+CLM-0127,factura/proforma,ilegible
+CLM-0127,informe tecnico,completo
+CLM-0128,formulario de reclamo,completo
+CLM-0128,cedula,completo
+CLM-0128,fotos del siniestro,completo
+CLM-0128,factura/proforma,completo
+CLM-0128,informe tecnico,completo
+CLM-0129,formulario de reclamo,completo
+CLM-0129,cedula,completo
+CLM-0129,fotos del siniestro,completo
+CLM-0129,factura/proforma,faltante
+CLM-0129,informe tecnico,completo
+CLM-0130,formulario de reclamo,completo
+CLM-0130,cedula,completo
+CLM-0130,fotos del siniestro,inconsistente
+CLM-0130,factura/proforma,ilegible
+CLM-0130,informe tecnico,completo
+CLM-0131,formulario de reclamo,completo
+CLM-0131,cedula,completo
+CLM-0131,fotos del siniestro,completo
+CLM-0131,factura/proforma,inconsistente
+CLM-0131,informe tecnico,completo
+CLM-0132,formulario de reclamo,completo
+CLM-0132,cedula,completo
+CLM-0132,fotos del siniestro,completo
+CLM-0132,factura/proforma,ilegible
+CLM-0132,informe tecnico,completo
+CLM-0133,formulario de reclamo,completo
+CLM-0133,cedula,inconsistente
+CLM-0133,fotos del siniestro,completo
+CLM-0133,factura/proforma,faltante
+CLM-0133,informe tecnico,completo
+CLM-0134,formulario de reclamo,completo
+CLM-0134,cedula,completo
+CLM-0134,fotos del siniestro,completo
+CLM-0134,factura/proforma,completo
+CLM-0134,informe tecnico,completo
+CLM-0135,formulario de reclamo,completo
+CLM-0135,cedula,completo
+CLM-0135,fotos del siniestro,completo
+CLM-0135,factura/proforma,completo
+CLM-0135,informe tecnico,completo
+CLM-0136,formulario de reclamo,completo
+CLM-0136,cedula,faltante
+CLM-0136,fotos del siniestro,completo
+CLM-0136,factura/proforma,completo
+CLM-0136,informe tecnico,completo
+CLM-0137,formulario de reclamo,faltante
+CLM-0137,cedula,completo
+CLM-0137,fotos del siniestro,completo
+CLM-0137,factura/proforma,completo
+CLM-0137,informe tecnico,completo
+CLM-0138,formulario de reclamo,inconsistente
+CLM-0138,cedula,completo
+CLM-0138,fotos del siniestro,completo
+CLM-0138,factura/proforma,completo
+CLM-0138,informe tecnico,completo
+CLM-0139,formulario de reclamo,completo
+CLM-0139,cedula,completo
+CLM-0139,fotos del siniestro,completo
+CLM-0139,factura/proforma,completo
+CLM-0139,informe tecnico,completo
+CLM-0140,formulario de reclamo,completo
+CLM-0140,cedula,completo
+CLM-0140,fotos del siniestro,completo
+CLM-0140,factura/proforma,completo
+CLM-0140,informe tecnico,faltante
+CLM-0141,formulario de reclamo,completo
+CLM-0141,cedula,completo
+CLM-0141,fotos del siniestro,ilegible
+CLM-0141,factura/proforma,completo
+CLM-0141,informe tecnico,completo
+CLM-0142,formulario de reclamo,completo
+CLM-0142,cedula,ilegible
+CLM-0142,fotos del siniestro,completo
+CLM-0142,factura/proforma,completo
+CLM-0142,informe tecnico,completo
+CLM-0143,formulario de reclamo,completo
+CLM-0143,cedula,completo
+CLM-0143,fotos del siniestro,faltante
+CLM-0143,factura/proforma,completo
+CLM-0143,informe tecnico,ilegible
+CLM-0144,formulario de reclamo,completo
+CLM-0144,cedula,completo
+CLM-0144,fotos del siniestro,completo
+CLM-0144,factura/proforma,completo
+CLM-0144,informe tecnico,completo
+CLM-0145,formulario de reclamo,completo
+CLM-0145,cedula,completo
+CLM-0145,fotos del siniestro,completo
+CLM-0145,factura/proforma,completo
+CLM-0145,informe tecnico,completo
+CLM-0146,formulario de reclamo,completo
+CLM-0146,cedula,completo
+CLM-0146,fotos del siniestro,completo
+CLM-0146,factura/proforma,inconsistente
+CLM-0146,informe tecnico,faltante
+CLM-0147,formulario de reclamo,completo
+CLM-0147,cedula,completo
+CLM-0147,fotos del siniestro,completo
+CLM-0147,factura/proforma,ilegible
+CLM-0147,informe tecnico,completo
+CLM-0148,formulario de reclamo,completo
+CLM-0148,cedula,completo
+CLM-0148,fotos del siniestro,completo
+CLM-0148,factura/proforma,completo
+CLM-0148,informe tecnico,completo
+CLM-0149,formulario de reclamo,completo
+CLM-0149,cedula,completo
+CLM-0149,fotos del siniestro,completo
+CLM-0149,factura/proforma,completo
+CLM-0149,informe tecnico,completo
+CLM-0150,formulario de reclamo,completo
+CLM-0150,cedula,completo
+CLM-0150,fotos del siniestro,completo
+CLM-0150,factura/proforma,completo
+CLM-0150,informe tecnico,completo
+CLM-0151,formulario de reclamo,completo
+CLM-0151,cedula,completo
+CLM-0151,fotos del siniestro,ilegible
+CLM-0151,factura/proforma,completo
+CLM-0151,informe tecnico,completo
+CLM-0152,formulario de reclamo,completo
+CLM-0152,cedula,completo
+CLM-0152,fotos del siniestro,completo
+CLM-0152,factura/proforma,completo
+CLM-0152,informe tecnico,completo
+CLM-0153,formulario de reclamo,completo
+CLM-0153,cedula,completo
+CLM-0153,fotos del siniestro,completo
+CLM-0153,factura/proforma,completo
+CLM-0153,informe tecnico,faltante
+CLM-0154,formulario de reclamo,completo
+CLM-0154,cedula,completo
+CLM-0154,fotos del siniestro,completo
+CLM-0154,factura/proforma,completo
+CLM-0154,informe tecnico,completo
+CLM-0155,formulario de reclamo,completo
+CLM-0155,cedula,inconsistente
+CLM-0155,fotos del siniestro,completo
+CLM-0155,factura/proforma,completo
+CLM-0155,informe tecnico,completo
+CLM-0156,formulario de reclamo,completo
+CLM-0156,cedula,completo
+CLM-0156,fotos del siniestro,completo
+CLM-0156,factura/proforma,ilegible
+CLM-0156,informe tecnico,completo
+CLM-0157,formulario de reclamo,completo
+CLM-0157,cedula,completo
+CLM-0157,fotos del siniestro,faltante
+CLM-0157,factura/proforma,completo
+CLM-0157,informe tecnico,completo
+CLM-0158,formulario de reclamo,completo
+CLM-0158,cedula,completo
+CLM-0158,fotos del siniestro,completo
+CLM-0158,factura/proforma,completo
+CLM-0158,informe tecnico,completo
+CLM-0159,formulario de reclamo,completo
+CLM-0159,cedula,completo
+CLM-0159,fotos del siniestro,completo
+CLM-0159,factura/proforma,completo
+CLM-0159,informe tecnico,completo
+CLM-0160,formulario de reclamo,inconsistente
+CLM-0160,cedula,completo
+CLM-0160,fotos del siniestro,completo
+CLM-0160,factura/proforma,completo
+CLM-0160,informe tecnico,completo
+CLM-0161,formulario de reclamo,completo
+CLM-0161,cedula,completo
+CLM-0161,fotos del siniestro,completo
+CLM-0161,factura/proforma,completo
+CLM-0161,informe tecnico,completo
+CLM-0162,formulario de reclamo,completo
+CLM-0162,cedula,completo
+CLM-0162,fotos del siniestro,completo
+CLM-0162,factura/proforma,completo
+CLM-0162,informe tecnico,completo
+CLM-0163,formulario de reclamo,completo
+CLM-0163,cedula,completo
+CLM-0163,fotos del siniestro,completo
+CLM-0163,factura/proforma,completo
+CLM-0163,informe tecnico,completo
+CLM-0164,formulario de reclamo,completo
+CLM-0164,cedula,completo
+CLM-0164,fotos del siniestro,completo
+CLM-0164,factura/proforma,completo
+CLM-0164,informe tecnico,completo
+CLM-0165,formulario de reclamo,completo
+CLM-0165,cedula,completo
+CLM-0165,fotos del siniestro,completo
+CLM-0165,factura/proforma,completo
+CLM-0165,informe tecnico,completo
+CLM-0166,formulario de reclamo,completo
+CLM-0166,cedula,completo
+CLM-0166,fotos del siniestro,completo
+CLM-0166,factura/proforma,completo
+CLM-0166,informe tecnico,completo
+CLM-0167,formulario de reclamo,completo
+CLM-0167,cedula,completo
+CLM-0167,fotos del siniestro,completo
+CLM-0167,factura/proforma,completo
+CLM-0167,informe tecnico,completo
+CLM-0168,formulario de reclamo,completo
+CLM-0168,cedula,completo
+CLM-0168,fotos del siniestro,completo
+CLM-0168,factura/proforma,completo
+CLM-0168,informe tecnico,completo
+CLM-0169,formulario de reclamo,completo
+CLM-0169,cedula,completo
+CLM-0169,fotos del siniestro,completo
+CLM-0169,factura/proforma,completo
+CLM-0169,informe tecnico,completo
+CLM-0170,formulario de reclamo,completo
+CLM-0170,cedula,completo
+CLM-0170,fotos del siniestro,completo
+CLM-0170,factura/proforma,completo
+CLM-0170,informe tecnico,completo
+CLM-0171,formulario de reclamo,completo
+CLM-0171,cedula,completo
+CLM-0171,fotos del siniestro,completo
+CLM-0171,factura/proforma,completo
+CLM-0171,informe tecnico,completo
+CLM-0172,formulario de reclamo,completo
+CLM-0172,cedula,completo
+CLM-0172,fotos del siniestro,completo
+CLM-0172,factura/proforma,completo
+CLM-0172,informe tecnico,completo
+CLM-0173,formulario de reclamo,completo
+CLM-0173,cedula,completo
+CLM-0173,fotos del siniestro,completo
+CLM-0173,factura/proforma,completo
+CLM-0173,informe tecnico,completo
+CLM-0174,formulario de reclamo,completo
+CLM-0174,cedula,completo
+CLM-0174,fotos del siniestro,completo
+CLM-0174,factura/proforma,completo
+CLM-0174,informe tecnico,completo
+CLM-0175,formulario de reclamo,completo
+CLM-0175,cedula,completo
+CLM-0175,fotos del siniestro,completo
+CLM-0175,factura/proforma,completo
+CLM-0175,informe tecnico,completo
+CLM-0176,formulario de reclamo,completo
+CLM-0176,cedula,completo
+CLM-0176,fotos del siniestro,completo
+CLM-0176,factura/proforma,completo
+CLM-0176,informe tecnico,completo
+CLM-0177,formulario de reclamo,completo
+CLM-0177,cedula,completo
+CLM-0177,fotos del siniestro,completo
+CLM-0177,factura/proforma,completo
+CLM-0177,informe tecnico,completo
+CLM-0178,formulario de reclamo,completo
+CLM-0178,cedula,completo
+CLM-0178,fotos del siniestro,completo
+CLM-0178,factura/proforma,completo
+CLM-0178,informe tecnico,completo
+CLM-0179,formulario de reclamo,completo
+CLM-0179,cedula,completo
+CLM-0179,fotos del siniestro,completo
+CLM-0179,factura/proforma,completo
+CLM-0179,informe tecnico,completo
+CLM-0180,formulario de reclamo,completo
+CLM-0180,cedula,completo
+CLM-0180,fotos del siniestro,completo
+CLM-0180,factura/proforma,completo
+CLM-0180,informe tecnico,completo
+CLM-0181,formulario de reclamo,completo
+CLM-0181,cedula,completo
+CLM-0181,fotos del siniestro,completo
+CLM-0181,factura/proforma,completo
+CLM-0181,informe tecnico,completo
+CLM-0182,formulario de reclamo,completo
+CLM-0182,cedula,completo
+CLM-0182,fotos del siniestro,completo
+CLM-0182,factura/proforma,completo
+CLM-0182,informe tecnico,completo
+CLM-0183,formulario de reclamo,completo
+CLM-0183,cedula,completo
+CLM-0183,fotos del siniestro,completo
+CLM-0183,factura/proforma,completo
+CLM-0183,informe tecnico,completo
+CLM-0184,formulario de reclamo,completo
+CLM-0184,cedula,completo
+CLM-0184,fotos del siniestro,completo
+CLM-0184,factura/proforma,completo
+CLM-0184,informe tecnico,completo
+CLM-0185,formulario de reclamo,completo
+CLM-0185,cedula,completo
+CLM-0185,fotos del siniestro,completo
+CLM-0185,factura/proforma,completo
+CLM-0185,informe tecnico,completo
+CLM-0186,formulario de reclamo,completo
+CLM-0186,cedula,completo
+CLM-0186,fotos del siniestro,completo
+CLM-0186,factura/proforma,completo
+CLM-0186,informe tecnico,completo
+CLM-0187,formulario de reclamo,completo
+CLM-0187,cedula,completo
+CLM-0187,fotos del siniestro,completo
+CLM-0187,factura/proforma,completo
+CLM-0187,informe tecnico,completo
+CLM-0188,formulario de reclamo,completo
+CLM-0188,cedula,completo
+CLM-0188,fotos del siniestro,completo
+CLM-0188,factura/proforma,completo
+CLM-0188,informe tecnico,completo
+CLM-0189,formulario de reclamo,completo
+CLM-0189,cedula,completo
+CLM-0189,fotos del siniestro,completo
+CLM-0189,factura/proforma,completo
+CLM-0189,informe tecnico,completo
+CLM-0190,formulario de reclamo,completo
+CLM-0190,cedula,completo
+CLM-0190,fotos del siniestro,completo
+CLM-0190,factura/proforma,completo
+CLM-0190,informe tecnico,completo

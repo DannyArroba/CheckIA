@@ -1,7 +1,7 @@
 import { UploadCloud } from 'lucide-react'
 import { useState } from 'react'
 import { claimsApi } from '../api/claimsApi.js'
-import CsvValidationModal, { buildUploadErrorModal } from './CsvValidationModal.jsx'
+import CsvValidationModal, { buildUploadErrorModal, buildUploadSuccessModal } from './CsvValidationModal.jsx'
 
 export default function UploadDataset({ onUploaded }) {
   const [message, setMessage] = useState('')
@@ -14,7 +14,8 @@ export default function UploadDataset({ onUploaded }) {
     setMessage('Validando CSV...')
     try {
       const response = await claimsApi.upload(file)
-      setMessage(`${response.message} Insertados: ${response.result?.inserted ?? 0}.`)
+      setMessage('')
+      setModal(buildUploadSuccessModal(response))
       onUploaded?.()
     } catch (error) {
       setMessage('')

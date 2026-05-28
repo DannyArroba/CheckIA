@@ -9,11 +9,11 @@ export default function KpiCard({ title, value, helper, tone = 'blue', icon: Ico
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-500">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-ink">{value}</p>
+          <p className="mt-2 truncate text-2xl font-bold text-ink xl:text-[1.65rem]" title={String(value)}>{value}</p>
         </div>
-        {Icon && <div className={`grid h-10 w-10 place-items-center rounded-lg ${tones[tone]}`}><Icon size={20} /></div>}
+        {Icon && <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${tones[tone]}`}><Icon size={20} /></div>}
       </div>
       {helper && <p className="mt-3 text-sm text-slate-500">{helper}</p>}
     </div>

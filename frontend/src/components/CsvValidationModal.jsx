@@ -1,4 +1,4 @@
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, X } from 'lucide-react'
 
 export function buildUploadErrorModal(error) {
   const detail = error?.detail
@@ -22,15 +22,33 @@ export function buildUploadErrorModal(error) {
   }
 }
 
+export function buildUploadSuccessModal(response) {
+  const result = response?.result || {}
+  return {
+    type: 'success',
+    title: 'Carga incremental completada',
+    body: result.message || response.message || 'El archivo fue procesado correctamente.',
+    stats: [
+      { label: 'Insertados', value: result.inserted ?? 0 },
+      { label: 'Duplicados omitidos', value: result.skipped_duplicates ?? 0 },
+      { label: 'Total activo', value: result.total_claims ?? '-' }
+    ]
+  }
+}
+
 export default function CsvValidationModal({ modal, onClose }) {
   if (!modal) return null
+  const isSuccess = modal.type === 'success'
+  const Icon = isSuccess ? CheckCircle2 : AlertTriangle
+  const iconTone = isSuccess ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm">
       <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-soft">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700">
-              <AlertTriangle size={22} />
+            <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg ${iconTone}`}>
+              <Icon size={22} />
             </div>
             <div>
               <h3 className="text-xl font-bold text-ink">{modal.title}</h3>
@@ -42,6 +60,7 @@ export default function CsvValidationModal({ modal, onClose }) {
           </button>
         </div>
 
+        {!!modal.stats?.length && <Stats items={modal.stats} />}
         {!!modal.missingColumns?.length && <Block title="Columnas faltantes" items={modal.missingColumns} tone="red" />}
         {!!modal.validationErrors?.length && <Block title="Valores inválidos detectados" items={modal.validationErrors} tone="amber" />}
         {!!modal.detectedColumns?.length && <Block title="Columnas detectadas" items={modal.detectedColumns} />}
@@ -53,6 +72,19 @@ export default function CsvValidationModal({ modal, onClose }) {
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function Stats({ items }) {
+  return (
+    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      {items.map((item) => (
+        <div key={item.label} className="rounded-lg bg-slate-50 p-4">
+          <p className="text-xs font-bold uppercase text-slate-500">{item.label}</p>
+          <p className="mt-1 text-2xl font-bold text-ink">{item.value}</p>
+        </div>
+      ))}
     </div>
   )
 }

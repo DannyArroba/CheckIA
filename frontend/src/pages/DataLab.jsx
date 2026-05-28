@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Database, FilePlus2, RefreshCw, UploadCloud } from 'lucide-react'
 import { claimsApi } from '../api/claimsApi.js'
 import KpiCard from '../components/KpiCard.jsx'
-import CsvValidationModal, { buildUploadErrorModal } from '../components/CsvValidationModal.jsx'
+import CsvValidationModal, { buildUploadErrorModal, buildUploadSuccessModal } from '../components/CsvValidationModal.jsx'
 
 export default function DataLab() {
   const [dbStatus, setDbStatus] = useState(null)
@@ -73,7 +73,8 @@ export default function DataLab() {
     setMessage('Validando estructura del CSV...')
     try {
       const result = await claimsApi.upload(file)
-      setMessage(`${result.message} Insertados: ${result.result?.inserted ?? 0}.`)
+      setMessage('')
+      setModal(buildUploadSuccessModal(result))
       await refresh()
     } catch (error) {
       setMessage('')
@@ -127,7 +128,9 @@ export default function DataLab() {
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <h3 className="text-xl font-bold text-ink">Cargar CSV de siniestros</h3>
-        <p className="mt-1 text-sm text-slate-600">Acepta CSV separado por punto y coma o coma. Debe incluir columnas como claim_id, policy_id, customer_id, provider_id, line, coverage, city, fechas, monto y narrativa.</p>
+        <p className="mt-1 text-sm text-slate-600">
+          Acepta CSV separado por punto y coma o coma. Si vuelves a cargar un archivo ya usado, CheckIA solo agrega los claim_id nuevos y omite duplicados.
+        </p>
         <label className="mt-4 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-4 font-semibold hover:bg-slate-50">
           <UploadCloud size={18} /> Seleccionar CSV desde mi PC
           <input type="file" accept=".csv" className="hidden" onChange={upload} />

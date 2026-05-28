@@ -110,6 +110,7 @@ def _read_uploaded_csv(file_path: Path) -> pd.DataFrame:
 def append_uploaded_claims(file_path: Path) -> dict:
     incoming = _read_uploaded_csv(file_path)
     incoming.columns = [str(column).strip().replace("\ufeff", "") for column in incoming.columns]
+    received_rows = int(len(incoming))
     missing = sorted(REQUIRED_COLUMNS - set(incoming.columns))
     if missing:
         return {
@@ -132,9 +133,22 @@ def append_uploaded_claims(file_path: Path) -> dict:
 
     claims_path = DATA_DIR / "synthetic_claims.csv"
     existing = pd.read_csv(claims_path)
-    incoming = incoming[~incoming["claim_id"].isin(existing["claim_id"])]
+    existing_ids = set(existing["claim_id"].astype(str))
+    incoming["claim_id"] = incoming["claim_id"].astype(str).str.strip()
+    duplicate_mask = incoming["claim_id"].isin(existing_ids) | incoming["claim_id"].duplicated(keep="first")
+    skipped_duplicates = int(duplicate_mask.sum())
+    duplicate_claim_ids = incoming.loc[duplicate_mask, "claim_id"].head(10).tolist()
+    incoming = incoming[~duplicate_mask].copy()
     if incoming.empty:
-        return {"accepted": True, "inserted": 0, "message": "El CSV no contiene siniestros nuevos."}
+        return {
+            "accepted": True,
+            "inserted": 0,
+            "received_rows": received_rows,
+            "skipped_duplicates": skipped_duplicates,
+            "duplicate_claim_ids": duplicate_claim_ids,
+            "total_claims": int(len(get_claims_dataset())),
+            "message": "El CSV fue válido, pero no contiene siniestros nuevos para agregar.",
+        }
 
     if "vehicle_id" not in incoming.columns:
         incoming["vehicle_id"] = ""
@@ -154,7 +168,15 @@ def append_uploaded_claims(file_path: Path) -> dict:
     pd.concat([documents, pd.DataFrame(new_docs)], ignore_index=True).to_csv(docs_path, index=False)
     get_claims_dataset.cache_clear()
 
-    return {"accepted": True, "inserted": int(len(incoming)), "total_claims": int(len(get_claims_dataset()))}
+    return {
+        "accepted": True,
+        "inserted": int(len(incoming)),
+        "received_rows": received_rows,
+        "skipped_duplicates": skipped_duplicates,
+        "duplicate_claim_ids": duplicate_claim_ids,
+        "total_claims": int(len(get_claims_dataset())),
+        "message": "Carga incremental completada. Los siniestros repetidos fueron omitidos por claim_id.",
+    }
 
 
 def _validate_claim_rows(frame: pd.DataFrame) -> list[str]:
