@@ -86,6 +86,43 @@ class ReviewActionRequest(BaseModel):
     note: str | None = None
 
 
+def _legacy_shape_claim(row: dict) -> dict:
+    level = row.get("nivel_riesgo") or "Bajo"
+    return {
+        "claim_id": row.get("id_siniestro"),
+        "anonymous_customer": row.get("asegurado_nombre") or row.get("id_asegurado") or "Asegurado anonimo",
+        "line": row.get("ramo") or "Sin ramo",
+        "coverage": row.get("cobertura") or "Sin cobertura",
+        "city": row.get("ciudad") or "Sin ciudad",
+        "provider_name": row.get("proveedor_nombre") or row.get("id_proveedor") or "Sin proveedor",
+        "claim_amount": float(row.get("monto_reclamado") or 0),
+        "risk_score": int(row.get("puntaje_riesgo") or 0),
+        "risk_level": level,
+        "risk_color": "Rojo" if level in {"Alto", "Critico"} else "Amarillo" if level == "Medio" else "Verde",
+        "recommended_action": "Revision prioritaria por analista" if level in {"Alto", "Critico"} else "Revision documental recomendada" if level == "Medio" else "Continuar flujo normal",
+        "claim_date": row.get("fecha_siniestro"),
+        "report_date": row.get("fecha_reporte"),
+    }
+
+
+def _legacy_shape_summary(summary_data: dict, rows: list[dict]) -> dict:
+    distribution = [{"risk_level": item["nivel_riesgo"], "count": item["total"]} for item in summary_data.get("risk_distribution", [])]
+    by_level = {item["risk_level"]: item["count"] for item in distribution}
+    mapped = [_legacy_shape_claim(row) for row in rows]
+    total_amount = sum(item["claim_amount"] for item in mapped)
+    return {
+        "total_claims": summary_data.get("counts", {}).get("siniestros", len(rows)),
+        "green_cases": by_level.get("Bajo", 0),
+        "yellow_cases": by_level.get("Medio", 0),
+        "red_cases": by_level.get("Alto", 0) + by_level.get("Critico", 0),
+        "total_claim_amount": total_amount,
+        "providers_with_alerts": len({row.get("id_proveedor") for row in rows if row.get("alertas") and row.get("id_proveedor")}),
+        "risk_distribution": distribution,
+        "top_claims": mapped[:10],
+        "smart_summary": f"Dataset HackIAthon activo con {summary_data.get('counts', {}).get('siniestros', len(rows))} siniestros importados. Las alertas son apoyo para revision humana.",
+    }
+
+
 @app.get("/api/health")
 def health() -> dict:
     return {"status": "ok", "app": "CheckIA", "message": "API operativa con datos sinteticos"}
@@ -93,11 +130,16 @@ def health() -> dict:
 
 @app.get("/api/claims")
 def claims() -> list[dict]:
-    return list_claims()
+    return [_legacy_shape_claim(row) for row in hackia_claims()]
 
 
 @app.get("/api/claims/{claim_id}")
 def claim_detail(claim_id: str) -> dict:
+    if claim_id.upper().startswith("SIN"):
+        detail = hackia_claim_detail(claim_id)
+        if not detail:
+            raise HTTPException(status_code=404, detail="Siniestro no encontrado")
+        return detail
     claim = get_claim(claim_id)
     if not claim:
         raise HTTPException(status_code=404, detail="Siniestro no encontrado")
@@ -106,7 +148,11 @@ def claim_detail(claim_id: str) -> dict:
 
 @app.get("/api/dashboard/summary")
 def summary() -> dict:
-    return dashboard_summary()
+    rows = hackia_claims()
+    hackia = hackia_summary()
+    if hackia.get("counts", {}).get("siniestros", 0) > 0:
+        return _legacy_shape_summary(hackia, rows)
+    return _legacy_shape_summary(hackia, [])
 
 
 @app.get("/api/risk/top")
