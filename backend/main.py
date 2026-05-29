@@ -20,6 +20,19 @@ from backend.src.services.database_service import (
     save_claim_review_action,
 )
 from backend.src.services.dataset_service import append_uploaded_claims, generate_additional_claims
+from backend.src.services.hackia_import_service import (
+    EXCEL_DIR,
+    PDF_DIR,
+    clear_hackia_data,
+    clear_legacy_demo_data,
+    hackia_claim_detail,
+    hackia_claims,
+    hackia_summary,
+    hackia_tables,
+    import_excel_workbook,
+    process_pdf_batch,
+    recalculate_hackia_analysis,
+)
 from backend.src.services.claims_service import (
     ask_agent,
     agent_status,
@@ -223,6 +236,93 @@ async def upload_dataset(file: UploadFile = File(...)) -> dict:
         "message": "Archivo recibido y procesado. El modelo se recalcula con los datos actualizados.",
         "result": result,
     }
+
+
+@app.post("/api/hackia/import-excel")
+async def import_hackia_excel(file: UploadFile = File(...)) -> dict:
+    if not file.filename or not file.filename.lower().endswith((".xlsx", ".xlsm", ".xls")):
+        raise HTTPException(status_code=400, detail="Sube un archivo Excel con hojas 1_Siniestros a 6_Indice_Documentos.")
+    EXCEL_DIR.mkdir(parents=True, exist_ok=True)
+    path = EXCEL_DIR / Path(file.filename).name
+    path.write_bytes(await file.read())
+    try:
+        return import_excel_workbook(path)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/hackia/import-pdfs")
+async def import_hackia_pdfs(files: list[UploadFile] = File(...)) -> dict:
+    PDF_DIR.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for file in files:
+        if not file.filename or not file.filename.lower().endswith(".pdf"):
+            continue
+        path = PDF_DIR / Path(file.filename).name
+        path.write_bytes(await file.read())
+        paths.append(path)
+    if not paths:
+        raise HTTPException(status_code=400, detail="No se recibieron PDFs validos.")
+    try:
+        return process_pdf_batch(paths)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"No se pudieron procesar PDFs: {exc}") from exc
+
+
+@app.get("/api/hackia/summary")
+def get_hackia_summary() -> dict:
+    try:
+        return hackia_summary()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"No se pudo leer resumen HackIAthon: {exc}") from exc
+
+
+@app.get("/api/hackia/claims")
+def get_hackia_claims() -> list[dict]:
+    try:
+        return hackia_claims()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"No se pudo leer siniestros HackIAthon: {exc}") from exc
+
+
+@app.get("/api/hackia/tables")
+def get_hackia_tables() -> dict:
+    try:
+        return hackia_tables()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"No se pudo leer tablas HackIAthon: {exc}") from exc
+
+
+@app.get("/api/hackia/claims/{id_siniestro}")
+def get_hackia_claim_detail(id_siniestro: str) -> dict:
+    detail = hackia_claim_detail(id_siniestro)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Siniestro HackIAthon no encontrado")
+    return detail
+
+
+@app.post("/api/hackia/recalculate")
+def post_hackia_recalculate() -> dict:
+    try:
+        return recalculate_hackia_analysis()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"No se pudo recalcular analisis: {exc}") from exc
+
+
+@app.post("/api/hackia/clear-legacy")
+def post_hackia_clear_legacy() -> dict:
+    try:
+        return clear_legacy_demo_data()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"No se pudo limpiar datos anteriores: {exc}") from exc
+
+
+@app.post("/api/hackia/clear")
+def post_hackia_clear() -> dict:
+    try:
+        return clear_hackia_data()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"No se pudo limpiar datos HackIAthon: {exc}") from exc
 
 
 @app.post("/api/dataset/generate")

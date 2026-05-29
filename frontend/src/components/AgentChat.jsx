@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Cpu, LoaderCircle, MessageSquarePlus, SearchCheck, Send, ShieldCheck, Sparkles, Trash2, UserRound } from 'lucide-react'
+import { Bot, Cpu, FileSpreadsheet, Files, LoaderCircle, MessageSquarePlus, SearchCheck, Send, ShieldCheck, Sparkles, Trash2, UserRound } from 'lucide-react'
 import { claimsApi } from '../api/claimsApi.js'
-import ClaimDetail from './ClaimDetail.jsx'
+import { HackiaDetail } from '../pages/Hackia.jsx'
 
 const quickQuestions = [
   '¿Cuáles son los 10 siniestros con mayor riesgo?',
@@ -31,6 +31,7 @@ export default function AgentChat() {
   const [loadingMode, setLoadingMode] = useState('simple')
   const [status, setStatus] = useState(null)
   const [selectedClaim, setSelectedClaim] = useState(null)
+  const [uploadStatus, setUploadStatus] = useState('')
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -117,8 +118,35 @@ export default function AgentChat() {
   }
 
   async function openClaim(claimId) {
-    const detail = await claimsApi.claim(claimId)
+    const detail = claimId.startsWith('SIN-') ? await claimsApi.hackiaClaim(claimId) : await claimsApi.claim(claimId)
     setSelectedClaim(detail)
+  }
+
+  async function uploadExcel(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setUploadStatus('Importando Excel...')
+    try {
+      const result = await claimsApi.uploadHackiaExcel(file)
+      setUploadStatus(`Excel cargado: ${result.records.siniestros} siniestros y ${result.records.documentos} documentos.`)
+    } catch (error) {
+      setUploadStatus(`No se pudo cargar Excel: ${error.detail || error.message}`)
+    }
+  }
+
+  async function uploadPdfs(event) {
+    const files = event.target.files
+    event.target.value = ''
+    if (!files?.length) return
+    setUploadStatus('Procesando PDFs...')
+    try {
+      const result = await claimsApi.uploadHackiaPdfs(files)
+      const rejected = result.details?.filter((item) => item.rechazado).length || 0
+      setUploadStatus(`PDFs procesados: ${result.stats.pdfs_procesados}. Omitidos sin SIN/DOC: ${rejected}.`)
+    } catch (error) {
+      setUploadStatus(`No se pudieron procesar PDFs: ${error.detail || error.message}`)
+    }
   }
 
   return (
@@ -212,6 +240,17 @@ export default function AgentChat() {
 
       <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
         <div className="mb-4 flex items-center gap-2 font-bold text-ink"><Sparkles size={18} /> Preguntas rápidas</div>
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          <label className="grid min-h-10 cursor-pointer place-items-center rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-electric hover:text-electric" title="Cargar Excel HackIAthon">
+            <FileSpreadsheet size={17} />
+            <input type="file" accept=".xlsx,.xls,.xlsm" className="hidden" onChange={uploadExcel} />
+          </label>
+          <label className="grid min-h-10 cursor-pointer place-items-center rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-electric hover:text-electric" title="Cargar PDFs">
+            <Files size={17} />
+            <input type="file" accept=".pdf" multiple className="hidden" onChange={uploadPdfs} />
+          </label>
+        </div>
+        {uploadStatus && <p className="mb-3 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">{uploadStatus}</p>}
         <div className="space-y-2">
           {quickQuestions.map((question) => (
             <button key={question} onClick={() => send(question)} disabled={loading} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-electric hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50">
@@ -220,7 +259,9 @@ export default function AgentChat() {
           ))}
         </div>
       </aside>
-      <ClaimDetail claim={selectedClaim} onClose={() => setSelectedClaim(null)} />
+      {selectedClaim?.siniestro
+        ? <HackiaDetail detail={selectedClaim} onClose={() => setSelectedClaim(null)} />
+        : null}
     </div>
   )
 }
@@ -334,9 +375,9 @@ function prepareMessageText(text) {
 }
 
 function InlineText({ text, onClaimClick }) {
-  const parts = text.split(/(\*\*[^*]+\*\*|CLM-\d{4})/g)
+  const parts = text.split(/(\*\*[^*]+\*\*|SIN-\d{4,6})/g)
   return parts.map((part, index) => {
-    if (/^CLM-\d{4}$/.test(part)) {
+    if (/^SIN-\d{4,6}$/.test(part)) {
       return (
         <button key={`${part}-${index}`} onClick={() => onClaimClick(part)} className="mx-0.5 rounded bg-blue-100 px-1.5 py-0.5 font-bold text-blue-800 hover:bg-blue-200">
           {part}
@@ -355,7 +396,7 @@ function Avatar({ icon: Icon, tone }) {
 }
 
 function extractClaimIds(text) {
-  return [...new Set((text.match(/CLM-\d{4}/g) || []))]
+  return [...new Set((text.match(/SIN-\d{4,6}/g) || []))]
 }
 
 function needsAnalysisLoading(text) {

@@ -27,7 +27,7 @@ export default function UploadDataset({ onUploaded }) {
     <>
       <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm shadow-soft hover:border-electric">
         <UploadCloud className="text-electric" size={22} />
-        <span className="font-semibold text-ink">Cargar CSV de prueba</span>
+        <span className="font-semibold text-ink">Carga anterior deshabilitada</span>
         <input type="file" accept=".csv" className="hidden" onChange={onFile} />
         {message && <span className="text-slate-500">{message}</span>}
       </label>

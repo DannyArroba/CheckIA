@@ -3,6 +3,7 @@ import { Activity, ShieldAlert } from 'lucide-react'
 const titles = {
   dashboard: 'Panel de control',
   cases: 'Siniestros analizados',
+  hackia: 'HackIAthon Excel + PDFs',
   agent: 'Agente IA',
   data: 'Datos y entrenamiento',
   reports: 'Reportes ejecutivos',

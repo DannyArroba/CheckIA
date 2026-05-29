@@ -1,6 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-const colors = { Bajo: '#10b981', Medio: '#f59e0b', Alto: '#ef4444' }
+const colors = { Bajo: '#10b981', Medio: '#f59e0b', Alto: '#ef4444', Critico: '#9f1239' }
 
 export default function DashboardCharts({
   summary,

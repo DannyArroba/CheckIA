@@ -11,6 +11,7 @@ from backend.src.ai_agent.claims_agent import ClaimsAgent
 from backend.src.ai_agent.ollama_client import OllamaClient
 from backend.src.explainability.explain_score import explain_claim, risk_level
 from backend.src.features.build_features import build_claim_contexts, build_model_features
+from backend.src.ingestion.load_data import load_all_data
 from backend.src.models.fraud_model import FraudRiskModel
 from backend.src.services.database_service import (
     get_latest_review_actions,
@@ -27,13 +28,12 @@ from backend.src.services.hybrid_analysis_service import (
     hybrid_model_summary,
     predictive_preanalysis,
 )
+from backend.src.services.hackia_import_service import hackia_agent_context
 
 
 @lru_cache(maxsize=1)
 def get_claims_dataset() -> pd.DataFrame:
-    if not has_source_data():
-        raise RuntimeError("La base checkia no tiene datos fuente. Usa /api/database/sync para cargar la semilla SQL.")
-    data = load_source_tables()
+    data = load_source_tables() if has_source_data() else load_all_data()
     enriched = build_claim_contexts(data)
     features = build_model_features(enriched)
     model = FraudRiskModel()
@@ -201,6 +201,10 @@ def ask_agent(message: str, conversation_id: int | None = None) -> dict:
 
     df = get_claims_dataset()
     response = ClaimsAgent(df, _review_context()).answer(corrected_message)
+    hackia_context = _hackia_context_response(corrected_message)
+    if hackia_context:
+        response["answer"] = f"{response['answer']}\n\nContexto Excel/PDF HackIAthon:\n{hackia_context}"
+        response["provider"] = "reglas+pdf"
     if corrected_message.strip().lower() != message.strip().lower():
         response["answer"] = f"Interpreté tu solicitud como: {corrected_message}.\n{response['answer']}"
     preanalysis = predictive_preanalysis(corrected_message, df, response.get("related_claims", []))
@@ -211,6 +215,15 @@ def ask_agent(message: str, conversation_id: int | None = None) -> dict:
     save_agent_message("agente", response["answer"], response.get("provider", "reglas"), conversation_id)
     response["conversation_id"] = conversation_id
     return response
+
+
+def _hackia_context_response(message: str) -> str | None:
+    if not re.search(r"\b(SIN[- ]?\d{1,6}|pdf|ocr|factura|parte policial|declaraci[oó]n|excel|inconsistencia)\b", message, re.IGNORECASE):
+        return None
+    try:
+        return hackia_agent_context(message) or None
+    except Exception:
+        return None
 
 
 def _normalize_user_message(message: str) -> str:

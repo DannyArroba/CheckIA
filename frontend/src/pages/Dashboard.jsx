@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, CircleDollarSign, FileWarning, ShieldCheck, Users } from 'lucide-react'
 import { claimsApi } from '../api/claimsApi.js'
-import ClaimDetail from '../components/ClaimDetail.jsx'
 import DashboardCharts from '../components/DashboardCharts.jsx'
 import KpiCard from '../components/KpiCard.jsx'
 import RiskBadge from '../components/RiskBadge.jsx'
+import { HackiaDetail } from './Hackia.jsx'
 
 export default function Dashboard() {
   const [summary, setSummary] = useState(null)
@@ -16,14 +16,15 @@ export default function Dashboard() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    Promise.all([claimsApi.summary(), claimsApi.claims(), claimsApi.providers(), claimsApi.cities()])
-      .then(([summaryData, claimsData, providerData, cityData]) => {
-        setSummary(summaryData)
-        setClaims(claimsData)
-        setProviders(providerData)
-        setCities(cityData)
+    Promise.all([claimsApi.hackiaSummary(), claimsApi.hackiaClaims()])
+      .then(([summaryData, claimsData]) => {
+        const mappedClaims = claimsData.map(mapHackiaClaimForDashboard)
+        setSummary(buildHackiaDashboardSummary(summaryData, claimsData, mappedClaims))
+        setClaims(mappedClaims)
+        setProviders(buildProviderRanking(claimsData))
+        setCities(buildCityRanking(claimsData))
       })
-      .catch(() => setError('No se pudo conectar con la API. Ejecuta el backend para ver datos.'))
+      .catch(() => setError('No se pudo conectar con la API HackIAthon. Ejecuta el backend y carga tu Excel.'))
   }, [])
 
   const visibleClaims = useMemo(() => {
@@ -44,26 +45,27 @@ export default function Dashboard() {
   }
 
   async function openClaim(claimId) {
-    const detail = await claimsApi.claim(claimId)
+    const detail = await claimsApi.hackiaClaim(claimId)
     setSelectedClaim(detail)
   }
 
   function formatMoney(value) {
-    return `$${Number(value).toLocaleString('es-EC', { maximumFractionDigits: 0 })}`
+    return `$${Number(value || 0).toLocaleString('es-EC', { maximumFractionDigits: 0 })}`
   }
 
   if (error) return <EmptyState text={error} />
-  if (!summary) return <EmptyState text="Cargando análisis de siniestros..." />
+  if (!summary) return <EmptyState text="Cargando analisis de siniestros..." />
+  if (!summary.total_claims) return <EmptyState text="Aun no hay siniestros HackIAthon cargados. Sube tu Excel desde Datos o arrastralo sobre la pantalla." />
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <KpiCard title="Total de siniestros" value={summary.total_claims} helper="Base sintética" icon={ShieldCheck} />
+        <KpiCard title="Total de siniestros" value={summary.total_claims} helper="Dataset importado" icon={ShieldCheck} />
         <KpiCard title="Casos verdes" value={summary.green_cases} helper="Riesgo bajo" tone="green" icon={CheckCircle2} />
-        <KpiCard title="Casos amarillos" value={summary.yellow_cases} helper="Revisión recomendada" tone="yellow" icon={AlertTriangle} />
+        <KpiCard title="Casos amarillos" value={summary.yellow_cases} helper="Revision recomendada" tone="yellow" icon={AlertTriangle} />
         <KpiCard title="Casos rojos" value={summary.red_cases} helper="Prioridad humana" tone="red" icon={FileWarning} />
         <KpiCard title="Monto reclamado" value={formatMoney(summary.total_claim_amount)} helper="Total analizado" icon={CircleDollarSign} />
-        <KpiCard title="Proveedores con alertas" value={summary.providers_with_alerts} helper="Medio o alto" tone="slate" icon={Users} />
+        <KpiCard title="Proveedores con alertas" value={summary.providers_with_alerts} helper="Con alertas activas" tone="slate" icon={Users} />
       </div>
 
       <div className="rounded-lg border border-blue-100 bg-blue-50 p-5 text-blue-950">
@@ -87,7 +89,7 @@ export default function Dashboard() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-ink">
-              {activeFilterCount ? 'Siniestros filtrados por selección del dashboard' : 'Top 10 siniestros con mayor posible riesgo'}
+              {activeFilterCount ? 'Siniestros filtrados por seleccion del dashboard' : 'Top 10 siniestros con mayor posible riesgo'}
             </h3>
             <p className="mt-1 text-sm text-slate-500">
               Los filtros de riesgo, ciudad y proveedor se combinan. Haz clic otra vez sobre el mismo elemento para quitarlo.
@@ -126,20 +128,72 @@ export default function Dashboard() {
           ))}
           {visibleClaims.length === 0 && (
             <div className="rounded-lg border border-dashed border-slate-300 p-6 text-sm text-slate-500 lg:col-span-2">
-              No hay siniestros que coincidan con esa combinación de filtros.
+              No hay siniestros que coincidan con esa combinacion de filtros.
             </div>
           )}
         </div>
       </div>
-      <ClaimDetail claim={selectedClaim} onClose={() => setSelectedClaim(null)} />
+      {selectedClaim && <HackiaDetail detail={selectedClaim} onClose={() => setSelectedClaim(null)} />}
     </div>
   )
+}
+
+function buildHackiaDashboardSummary(summaryData, rawClaims, mappedClaims) {
+  const distribution = (summaryData?.risk_distribution || []).map((row) => ({
+    risk_level: row.nivel_riesgo,
+    count: row.total
+  }))
+  const byLevel = Object.fromEntries(distribution.map((row) => [row.risk_level, row.count]))
+  const totalAmount = rawClaims.reduce((sum, claim) => sum + Number(claim.monto_reclamado || 0), 0)
+  const totalAlerts = rawClaims.reduce((sum, claim) => sum + Number(claim.alertas || 0), 0)
+  return {
+    total_claims: summaryData?.counts?.siniestros || rawClaims.length,
+    green_cases: byLevel.Bajo || 0,
+    yellow_cases: byLevel.Medio || 0,
+    red_cases: (byLevel.Alto || 0) + (byLevel.Critico || 0),
+    total_claim_amount: totalAmount,
+    providers_with_alerts: new Set(rawClaims.filter((claim) => Number(claim.alertas || 0) > 0).map((claim) => claim.proveedor_nombre || claim.id_proveedor).filter(Boolean)).size,
+    risk_distribution: distribution,
+    top_claims: mappedClaims.slice(0, 10),
+    smart_summary: `Dataset HackIAthon activo con ${summaryData?.counts?.siniestros || rawClaims.length} siniestros importados y ${totalAlerts} alertas de revision. El tablero prioriza casos para analisis humano, sin acusar ni decidir automaticamente.`
+  }
+}
+
+function mapHackiaClaimForDashboard(claim) {
+  return {
+    claim_id: claim.id_siniestro,
+    city: claim.ciudad || 'Sin ciudad',
+    provider_name: claim.proveedor_nombre || claim.id_proveedor || 'Sin proveedor',
+    claim_amount: Number(claim.monto_reclamado || 0),
+    risk_score: Number(claim.puntaje_riesgo || 0),
+    risk_level: claim.nivel_riesgo || 'Bajo'
+  }
+}
+
+function buildCityRanking(claimsData) {
+  const grouped = new Map()
+  claimsData.forEach((claim) => {
+    const city = claim.ciudad || 'Sin ciudad'
+    grouped.set(city, (grouped.get(city) || 0) + 1)
+  })
+  return [...grouped.entries()].map(([city, claims]) => ({ city, claims })).sort((a, b) => b.claims - a.claims)
+}
+
+function buildProviderRanking(claimsData) {
+  const grouped = new Map()
+  claimsData.forEach((claim) => {
+    const provider = claim.proveedor_nombre || claim.id_proveedor || 'Sin proveedor'
+    const current = grouped.get(provider) || { provider_name: provider, alerts: 0 }
+    current.alerts += Number(claim.alertas || 0)
+    grouped.set(provider, current)
+  })
+  return [...grouped.values()].sort((a, b) => b.alerts - a.alerts)
 }
 
 function FilterChip({ label, onClear }) {
   return (
     <button type="button" onClick={onClear} className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800 hover:bg-blue-100">
-      {label} ×
+      {label} x
     </button>
   )
 }

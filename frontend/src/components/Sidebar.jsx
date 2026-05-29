@@ -1,8 +1,10 @@
-import { BarChart3, Bot, Database, FileText, Info, ShieldCheck, Table2 } from 'lucide-react'
+import { BarChart3, Bot, Database, FileText, Info, ScanSearch, Table2 } from 'lucide-react'
+import checkiaIcon from '../assets/checkia-icon.png'
 
 const items = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
   { id: 'cases', label: 'Casos', icon: Table2 },
+  { id: 'hackia', label: 'HackIAthon', icon: ScanSearch },
   { id: 'agent', label: 'Agente IA', icon: Bot },
   { id: 'data', label: 'Datos', icon: Database },
   { id: 'reports', label: 'Reportes', icon: FileText },
@@ -14,13 +16,10 @@ export default function Sidebar({ activePage, setActivePage, compact }) {
     <aside className={`${compact ? 'relative w-full' : 'fixed inset-y-0 left-0 w-72'} z-20 bg-ink text-white`}>
       <div className="flex h-full flex-col">
         <div className="flex items-center gap-3 px-6 py-6">
-          <div className="grid h-11 w-11 place-items-center rounded-lg bg-electric">
-            <ShieldCheck size={24} />
+          <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-white shadow-soft">
+            <img src={checkiaIcon} alt="CheckIA" className="h-full w-full object-contain" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-normal">CheckIA</h1>
-            <p className="text-xs text-blue-100">Asistente inteligente para revisión de siniestros</p>
-          </div>
+          <h1 className="text-xl font-bold tracking-normal">CheckIA</h1>
         </div>
         <nav className={`${compact ? 'flex overflow-x-auto px-3 pb-4' : 'space-y-2 px-4'}`}>
           {items.map((item) => {
@@ -40,11 +39,6 @@ export default function Sidebar({ activePage, setActivePage, compact }) {
             )
           })}
         </nav>
-        {!compact && (
-          <div className="mt-auto px-6 py-6 text-xs leading-5 text-blue-100">
-            Alertas explicables para priorizar revisión humana. Sin acusaciones ni decisiones automáticas.
-          </div>
-        )}
       </div>
     </aside>
   )

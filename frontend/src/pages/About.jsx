@@ -4,7 +4,7 @@ const steps = [
   {
     icon: UploadCloud,
     title: '1. Cargar datos',
-    text: 'Usa Datos para generar un CSV sintético, revisarlo en Excel y subirlo manualmente. Si el archivo trae claim_id repetidos, CheckIA los omite y agrega solo los nuevos.'
+    text: 'Usa Datos para subir el Excel HackIAthon y los PDFs del expediente. Si vuelves a subir el mismo Excel, CheckIA actualiza por ID de siniestro y evita duplicados.'
   },
   {
     icon: ShieldCheck,
@@ -24,7 +24,7 @@ const steps = [
   {
     icon: Database,
     title: '5. Sincronizar MySQL',
-    text: 'Cuando quieras evidencia persistente para demo, sincroniza los CSV, resultados de riesgo, seguimientos y chats con la base checkia en XAMPP/MySQL.'
+    text: 'La base checkia en XAMPP/MySQL guarda siniestros, pólizas, asegurados, proveedores, documentos, textos extraídos, alertas y análisis.'
   },
   {
     icon: AlertCircle,

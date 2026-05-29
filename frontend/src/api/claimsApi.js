@@ -31,6 +31,13 @@ export const claimsApi = {
   databaseStatus: () => request('/api/database/status'),
   syncDatabase: () => request('/api/database/sync', { method: 'POST' }),
   generateDataset: (count, riskMix) => request('/api/dataset/generate', { method: 'POST', body: JSON.stringify({ count, risk_mix: riskMix }) }),
+  hackiaSummary: () => request('/api/hackia/summary'),
+  hackiaClaims: () => request('/api/hackia/claims'),
+  hackiaTables: () => request('/api/hackia/tables'),
+  hackiaClaim: (id) => request(`/api/hackia/claims/${id}`),
+  hackiaRecalculate: () => request('/api/hackia/recalculate', { method: 'POST' }),
+  hackiaClearLegacy: () => request('/api/hackia/clear-legacy', { method: 'POST' }),
+  hackiaClear: () => request('/api/hackia/clear', { method: 'POST' }),
   agentConversations: () => request('/api/agent/conversations'),
   createConversation: () => request('/api/agent/conversations', { method: 'POST' }),
   deleteConversation: (id) => request(`/api/agent/conversations/${id}`, { method: 'DELETE' }),
@@ -45,6 +52,38 @@ export const claimsApi = {
     const form = new FormData()
     form.append('file', file)
     const response = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: form })
+    if (!response.ok) {
+      const error = new Error(`Error API ${response.status}`)
+      try {
+        const payload = await response.json()
+        error.detail = payload.detail
+      } catch {
+        error.detail = null
+      }
+      throw error
+    }
+    return response.json()
+  },
+  uploadHackiaExcel: async (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    const response = await fetch(`${API_BASE}/api/hackia/import-excel`, { method: 'POST', body: form })
+    if (!response.ok) {
+      const error = new Error(`Error API ${response.status}`)
+      try {
+        const payload = await response.json()
+        error.detail = payload.detail
+      } catch {
+        error.detail = null
+      }
+      throw error
+    }
+    return response.json()
+  },
+  uploadHackiaPdfs: async (files) => {
+    const form = new FormData()
+    Array.from(files).forEach((file) => form.append('files', file))
+    const response = await fetch(`${API_BASE}/api/hackia/import-pdfs`, { method: 'POST', body: form })
     if (!response.ok) {
       const error = new Error(`Error API ${response.status}`)
       try {
