@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, Download, FileText, Search } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Download, FileText, Search } from 'lucide-react'
 import { claimsApi } from '../api/claimsApi.js'
 
 const tabs = [
@@ -91,43 +91,116 @@ export default function Hackia() {
 }
 
 function ClaimsTable({ rows, onOpen }) {
+  const [sort, setSort] = useState({ key: 'puntaje_riesgo', direction: 'desc' })
+  const columns = [
+    ['ID Siniestro', 'id_siniestro'],
+    ['ID Poliza', 'id_poliza'],
+    ['ID Asegurado', 'id_asegurado'],
+    ['Ramo', 'ramo'],
+    ['Placa Vehiculo Asegurado', 'placa'],
+    ['Cobertura', 'cobertura'],
+    ['Fecha Ocurrencia', 'fecha_siniestro'],
+    ['Fecha Reporte', 'fecha_reporte'],
+    ['Dias Ocurr-Reporte', 'dias_ocurrencia_reporte'],
+    ['Monto Reclamado ($)', 'monto_reclamado', 'money'],
+    ['Monto Estimado ($)', 'monto_estimado', 'money'],
+    ['Monto Pagado ($)', 'monto_pagado', 'money'],
+    ['Estado', 'estado'],
+    ['Sucursal', 'sucursal'],
+    ['ID Proveedor', 'id_proveedor'],
+    ['Proveedor', 'nombre_proveedor'],
+    ['Descripcion del Evento', 'descripcion_evento', 'long'],
+    ['Docs Completos', 'docs_completos', 'bool'],
+    ['Prov. Lista Restrictiva', 'proveedor_lista_restrictiva', 'bool'],
+    ['Dias desde Inicio Poliza', 'dias_desde_inicio_poliza'],
+    ['Dias hasta Fin Poliza', 'dias_hasta_fin_poliza'],
+    ['N Reclamos Previos', 'reclamos_previos'],
+    ['Suma Asegurada ($)', 'suma_asegurada', 'money'],
+    ['Similitud Narrativa Max.', 'similitud_narrativa_max'],
+    ['Numero Parte Policial', 'numero_parte_policial'],
+    ['Score', 'puntaje_riesgo', 'score'],
+    ['Nivel', 'nivel_riesgo', 'risk'],
+    ['Documentos', 'documentos'],
+    ['PDFs', 'pdfs_procesados'],
+    ['Alertas', 'alertas']
+  ]
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((a, b) => compareTableValues(sortValue(a, sort.key), sortValue(b, sort.key), sort.direction))
+  }, [rows, sort])
+
+  function toggleSort(key) {
+    setSort((current) => {
+      if (current.key !== key) return { key, direction: 'asc' }
+      return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+    })
+  }
+
   return (
     <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200">
+        <table className="min-w-[2800px] divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
-              {['Siniestro', 'Ramo', 'Cobertura', 'Placa', 'Estado', 'Proveedor', 'Monto', 'Score', 'Docs', 'PDFs', 'Alertas'].map((label) => (
-                <th key={label} className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">{label}</th>
+              {columns.map(([label, key]) => (
+                <th key={label} className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">
+                  <button type="button" onClick={() => toggleSort(key)} className="inline-flex items-center gap-1 hover:text-electric" title={`Ordenar por ${label}`}>
+                    <span>{label}</span>
+                    {sort.key === key
+                      ? sort.direction === 'asc'
+                        ? <ArrowUp size={13} />
+                        : <ArrowDown size={13} />
+                      : <ArrowUpDown size={13} className="text-slate-300" />}
+                  </button>
+                </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map((claim) => (
+            {sortedRows.map((claim) => (
               <tr key={claim.id_siniestro} onClick={() => onOpen(claim.id_siniestro)} className="cursor-pointer hover:bg-blue-50/50">
-                <td className="px-4 py-3 text-sm font-bold text-electric">{claim.id_siniestro}</td>
-                <td className="px-4 py-3 text-sm">{claim.ramo || '-'}</td>
-                <td className="px-4 py-3 text-sm">{claim.cobertura || '-'}</td>
-                <td className="px-4 py-3 text-sm">{claim.placa || '-'}</td>
-                <td className="px-4 py-3 text-sm">{claim.estado || '-'}</td>
-                <td className="px-4 py-3 text-sm">{claim.nombre_proveedor || claim.id_proveedor || '-'}</td>
-                <td className="px-4 py-3 text-sm font-semibold">${Number(claim.monto_reclamado || 0).toLocaleString()}</td>
-                <td className="px-4 py-3 text-sm">
-                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ${riskTones[claim.nivel_riesgo] || riskTones.Bajo}`}>
-                    {claim.puntaje_riesgo} - {claim.nivel_riesgo}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm">{claim.documentos}</td>
-                <td className="px-4 py-3 text-sm">{claim.pdfs_procesados}</td>
-                <td className="px-4 py-3 text-sm font-bold text-red-700">{claim.alertas}</td>
+                {columns.map(([label, key, type]) => (
+                  <td key={`${claim.id_siniestro}-${key}`} className={`px-4 py-3 text-sm ${type === 'long' ? 'min-w-80 text-slate-600' : 'whitespace-nowrap'}`}>
+                    {renderClaimCell(claim, key, type)}
+                  </td>
+                ))}
               </tr>
             ))}
-            {!rows.length && <EmptyRow colSpan={11} />}
+            {!sortedRows.length && <EmptyRow colSpan={columns.length} />}
           </tbody>
         </table>
       </div>
     </section>
   )
+}
+
+function sortValue(row, key) {
+  const value = row[key]
+  if (value === null || value === undefined || value === '-') return ''
+  if (typeof value === 'number') return value
+  if (['monto_reclamado', 'monto_estimado', 'monto_pagado', 'dias_ocurrencia_reporte', 'dias_desde_inicio_poliza', 'dias_hasta_fin_poliza', 'reclamos_previos', 'suma_asegurada', 'similitud_narrativa_max', 'puntaje_riesgo', 'documentos', 'pdfs_procesados', 'alertas'].includes(key)) {
+    const number = Number(String(value).replace(/[^0-9.-]/g, ''))
+    return Number.isNaN(number) ? 0 : number
+  }
+  return String(value).toLowerCase()
+}
+
+function compareTableValues(a, b, direction) {
+  if (typeof a === 'number' && typeof b === 'number') {
+    return direction === 'asc' ? a - b : b - a
+  }
+  const result = String(a).localeCompare(String(b), 'es', { numeric: true, sensitivity: 'base' })
+  return direction === 'asc' ? result : -result
+}
+
+function renderClaimCell(claim, key, type) {
+  if (key === 'id_siniestro') return <span className="font-bold text-electric">{claim[key]}</span>
+  if (type === 'money') return `$${Number(claim[key] || 0).toLocaleString()}`
+  if (type === 'bool') return claim[key] ? 'Si' : 'No'
+  if (type === 'score') return <span className="font-bold text-ink">{claim[key] ?? 0}</span>
+  if (type === 'risk') {
+    return <span className={`rounded-full border px-3 py-1 text-xs font-bold ${riskTones[claim[key]] || riskTones.Bajo}`}>{claim[key] || 'Bajo'}</span>
+  }
+  return claim[key] ?? '-'
 }
 
 function PdfsTable({ rows, onOpen }) {
@@ -226,7 +299,7 @@ export function HackiaDetail({ detail, onClose }) {
         </div>
 
         <Grid title="Resumen del caso" items={[
-          ['Ramo', siniestro.ramo], ['Cobertura', siniestro.cobertura], ['Placa Excel', siniestro.placa], ['Ciudad', siniestro.ciudad],
+          ['Ramo', siniestro.ramo], ['Cobertura', siniestro.cobertura], ['Placa Excel', siniestro.placa], ['Ciudad', siniestro.ciudad || siniestro.sucursal],
           ['Estado', siniestro.estado], ['Fecha ocurrencia', siniestro.fecha_siniestro], ['Fecha reporte', siniestro.fecha_reporte],
           ['Dias ocurrencia-reporte', siniestro.dias_ocurrencia_reporte], ['Monto reclamado', siniestro.monto_reclamado],
           ['Monto estimado', siniestro.monto_estimado], ['Monto pagado', siniestro.monto_pagado],

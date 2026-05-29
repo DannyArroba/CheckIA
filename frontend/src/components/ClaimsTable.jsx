@@ -1,9 +1,11 @@
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import RiskBadge from './RiskBadge.jsx'
 
 const columns = [
   { key: 'claim_id', label: 'ID siniestro', className: 'whitespace-nowrap', render: (claim) => <span className="font-bold text-electric">{claim.claim_id}</span> },
+  { key: 'policy_id', label: 'ID poliza', className: 'whitespace-nowrap' },
+  { key: 'insured_id', label: 'ID asegurado', className: 'whitespace-nowrap' },
   { key: 'anonymous_customer', label: 'Asegurado', className: 'whitespace-nowrap', render: (claim) => (
     <div className="flex items-center gap-2">
       <span>{claim.anonymous_customer}</span>
@@ -11,23 +13,42 @@ const columns = [
     </div>
   ) },
   { key: 'line', label: 'Ramo', className: 'whitespace-nowrap' },
+  { key: 'plate', label: 'Placa vehiculo', className: 'whitespace-nowrap' },
   { key: 'coverage', label: 'Cobertura', className: 'min-w-44 text-slate-600' },
+  { key: 'claim_date', label: 'Fecha ocurrencia', className: 'whitespace-nowrap' },
+  { key: 'report_date', label: 'Fecha reporte', className: 'whitespace-nowrap' },
+  { key: 'days_report', label: 'Dias ocurr-reporte', className: 'whitespace-nowrap' },
   { key: 'city', label: 'Ciudad', className: 'whitespace-nowrap' },
+  { key: 'branch', label: 'Sucursal', className: 'whitespace-nowrap' },
+  { key: 'provider_id', label: 'ID proveedor', className: 'whitespace-nowrap' },
   { key: 'provider_name', label: 'Proveedor', className: 'min-w-48' },
   { key: 'claim_amount', label: 'Monto', className: 'whitespace-nowrap font-semibold', value: (claim) => String(claim.claim_amount), render: (claim) => `$${Number(claim.claim_amount).toLocaleString()}` },
+  { key: 'estimated_amount', label: 'Monto estimado', className: 'whitespace-nowrap', value: (claim) => String(claim.estimated_amount), render: (claim) => `$${Number(claim.estimated_amount || 0).toLocaleString()}` },
+  { key: 'paid_amount', label: 'Monto pagado', className: 'whitespace-nowrap', value: (claim) => String(claim.paid_amount), render: (claim) => `$${Number(claim.paid_amount || 0).toLocaleString()}` },
+  { key: 'status', label: 'Estado', className: 'whitespace-nowrap' },
+  { key: 'docs_complete', label: 'Docs completos', className: 'whitespace-nowrap' },
+  { key: 'provider_restricted', label: 'Prov. lista restrictiva', className: 'whitespace-nowrap' },
+  { key: 'days_from_start', label: 'Dias desde inicio', className: 'whitespace-nowrap' },
+  { key: 'days_to_end', label: 'Dias hasta fin', className: 'whitespace-nowrap' },
+  { key: 'previous_claims', label: 'Reclamos previos', className: 'whitespace-nowrap' },
+  { key: 'insured_sum', label: 'Suma asegurada', className: 'whitespace-nowrap', value: (claim) => String(claim.insured_sum), render: (claim) => `$${Number(claim.insured_sum || 0).toLocaleString()}` },
+  { key: 'narrative_similarity', label: 'Similitud narrativa', className: 'whitespace-nowrap' },
+  { key: 'police_report_number', label: 'Numero parte policial', className: 'whitespace-nowrap' },
   { key: 'risk_score', label: 'Score', className: 'whitespace-nowrap font-bold', value: (claim) => String(claim.risk_score) },
   { key: 'risk_level', label: 'Riesgo', className: 'whitespace-nowrap', render: (claim) => <RiskBadge level={claim.risk_level} /> },
+  { key: 'event_description', label: 'Descripcion del evento', className: 'min-w-80 text-slate-600' },
   { key: 'recommended_action', label: 'Acción', className: 'min-w-52 text-slate-600' }
 ]
 
 export default function ClaimsTable({ claims, onSelect }) {
   const [openFilter, setOpenFilter] = useState(null)
   const [filters, setFilters] = useState({})
+  const [sort, setSort] = useState({ key: 'risk_score', direction: 'desc' })
   const scrollRef = useRef(null)
   const [scrollState, setScrollState] = useState({ left: false, right: false })
 
   const filteredClaims = useMemo(() => {
-    return claims.filter((claim) => {
+    const rows = claims.filter((claim) => {
       return columns.every((column) => {
         const filter = (filters[column.key] || '').trim().toLowerCase()
         if (!filter) return true
@@ -35,7 +56,15 @@ export default function ClaimsTable({ claims, onSelect }) {
         return String(raw ?? '').toLowerCase().includes(filter)
       })
     })
-  }, [claims, filters])
+    return [...rows].sort((a, b) => compareValues(sortValue(a, sort.key), sortValue(b, sort.key), sort.direction))
+  }, [claims, filters, sort])
+
+  function toggleSort(key) {
+    setSort((current) => {
+      if (current.key !== key) return { key, direction: 'asc' }
+      return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+    })
+  }
 
   function updateFilter(key, value) {
     setFilters((current) => ({ ...current, [key]: value }))
@@ -112,7 +141,19 @@ export default function ClaimsTable({ claims, onSelect }) {
                   className="sticky top-0 z-20 bg-slate-50 px-4 py-3 text-left align-top text-xs font-bold uppercase tracking-wide text-slate-500 shadow-[0_1px_0_0_rgba(226,232,240,1)]"
                 >
                   <div className="flex min-w-28 items-center gap-2">
-                    <span>{column.label}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleSort(column.key)}
+                      className="inline-flex items-center gap-1 text-left hover:text-electric"
+                      title={`Ordenar por ${column.label}`}
+                    >
+                      <span>{column.label}</span>
+                      {sort.key === column.key
+                        ? sort.direction === 'asc'
+                          ? <ArrowUp size={13} />
+                          : <ArrowDown size={13} />
+                        : <ArrowUpDown size={13} className="text-slate-300" />}
+                    </button>
                     <button
                       type="button"
                       onClick={() => setOpenFilter(openFilter === column.key ? null : column.key)}
@@ -166,6 +207,25 @@ export default function ClaimsTable({ claims, onSelect }) {
       </div>
     </div>
   )
+}
+
+function sortValue(claim, key) {
+  const value = claim[key]
+  if (value === null || value === undefined || value === '-') return ''
+  if (typeof value === 'number') return value
+  if (['claim_amount', 'estimated_amount', 'paid_amount', 'days_report', 'days_from_start', 'days_to_end', 'previous_claims', 'insured_sum', 'narrative_similarity', 'risk_score'].includes(key)) {
+    const number = Number(String(value).replace(/[^0-9.-]/g, ''))
+    return Number.isNaN(number) ? 0 : number
+  }
+  return String(value).toLowerCase()
+}
+
+function compareValues(a, b, direction) {
+  if (typeof a === 'number' && typeof b === 'number') {
+    return direction === 'asc' ? a - b : b - a
+  }
+  const result = String(a).localeCompare(String(b), 'es', { numeric: true, sensitivity: 'base' })
+  return direction === 'asc' ? result : -result
 }
 
 function ReviewBadge({ status, label, compact = false }) {

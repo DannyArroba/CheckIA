@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import re
@@ -356,7 +356,7 @@ def _process_pdf_batch_legacy(paths: list[Path]) -> dict:
                 details.append({
                     "archivo": target.name,
                     "rechazado": True,
-                    "motivo": "No se detectó ID de siniestro SIN-xxxx ni ID de documento DOC-xxxx en el nombre o contenido del PDF.",
+                    "motivo": "No se detectÃ³ ID de siniestro SIN-xxxx ni ID de documento DOC-xxxx en el nombre o contenido del PDF.",
                 })
                 continue
             excel_doc = _find_excel_document(id_documento, id_siniestro, target.name)
@@ -443,7 +443,7 @@ def recalculate_hackia_analysis() -> dict:
                 )
                 generated += len(alerts)
         connection.commit()
-    _log("analisis", "Análisis recalculado", {"siniestros": len(claims), "alertas": generated})
+    _log("analisis", "AnÃ¡lisis recalculado", {"siniestros": len(claims), "alertas": generated})
     return {"siniestros": len(claims), "alertas_generadas": generated}
 
 
@@ -529,7 +529,7 @@ def hackia_executive_report() -> dict:
     )
     cities = _fetch_all(
         """
-        SELECT COALESCE(ciudad, 'Sin ciudad') AS city,
+        SELECT COALESCE(NULLIF(s.ciudad, ''), s.sucursal, 'Sin ciudad') AS city,
                COUNT(*) AS claims,
                SUM(CASE WHEN a.nivel_riesgo IN ('Alto', 'Critico') THEN 1 ELSE 0 END) AS red_cases,
                ROUND(AVG(COALESCE(a.puntaje_riesgo, 0)), 1) AS avg_score
@@ -667,9 +667,14 @@ def hackia_claims() -> list[dict]:
     ensure_hackia_schema()
     return _fetch_all(
         """
-        SELECT s.id_siniestro, s.id_poliza, s.id_asegurado, s.ramo, s.placa, s.ciudad, s.id_proveedor,
-               p.nombre_proveedor, s.fecha_siniestro, s.fecha_reporte, s.docs_completos,
+        SELECT s.id_siniestro, s.id_poliza, s.id_asegurado, s.ramo, s.placa,
+               COALESCE(NULLIF(s.ciudad, ''), s.sucursal, 'Sin ciudad') AS ciudad,
+               s.id_proveedor, p.nombre_proveedor, p.nombre_proveedor AS proveedor_nombre,
+               s.fecha_siniestro, s.fecha_reporte, s.docs_completos,
                s.cobertura, s.estado, s.monto_reclamado, s.monto_estimado, s.monto_pagado,
+               s.sucursal, s.descripcion_evento, s.proveedor_lista_restrictiva, s.dias_ocurrencia_reporte,
+               s.dias_desde_inicio_poliza, s.dias_hasta_fin_poliza, s.reclamos_previos,
+               s.suma_asegurada, s.similitud_narrativa_max, s.numero_parte_policial,
                COALESCE(a.puntaje_riesgo, 0) AS puntaje_riesgo, COALESCE(a.nivel_riesgo, 'Bajo') AS nivel_riesgo,
                COUNT(DISTINCT d.id_documento) AS documentos,
                COUNT(DISTINCT de.id) AS pdfs_procesados,
@@ -680,9 +685,12 @@ def hackia_claims() -> list[dict]:
         LEFT JOIN documentos d ON d.id_siniestro=s.id_siniestro
         LEFT JOIN documentos_extraidos de ON de.id_siniestro=s.id_siniestro
         LEFT JOIN alertas_fraude af ON af.id_siniestro=s.id_siniestro
-        GROUP BY s.id_siniestro, s.id_poliza, s.id_asegurado, s.ramo, s.placa, s.ciudad, s.id_proveedor,
+        GROUP BY s.id_siniestro, s.id_poliza, s.id_asegurado, s.ramo, s.placa, s.ciudad, s.sucursal, s.id_proveedor,
                  p.nombre_proveedor, s.fecha_siniestro, s.fecha_reporte, s.docs_completos,
                  s.cobertura, s.estado, s.monto_reclamado, s.monto_estimado, s.monto_pagado,
+                 s.sucursal, s.descripcion_evento, s.proveedor_lista_restrictiva, s.dias_ocurrencia_reporte,
+                 s.dias_desde_inicio_poliza, s.dias_hasta_fin_poliza, s.reclamos_previos,
+                 s.suma_asegurada, s.similitud_narrativa_max, s.numero_parte_policial,
                  a.puntaje_riesgo, a.nivel_riesgo
         ORDER BY puntaje_riesgo DESC, s.id_siniestro ASC
         LIMIT 1000
@@ -696,6 +704,7 @@ def hackia_claim_detail(id_siniestro: str) -> dict | None:
     claim = _fetch_one("SELECT * FROM siniestros WHERE id_siniestro=%s", (sid,))
     if not claim:
         return None
+    claim["ciudad"] = claim.get("ciudad") or claim.get("sucursal") or "Sin ciudad"
     return {
         "siniestro": claim,
         "poliza": _fetch_one("SELECT * FROM polizas WHERE id_poliza=%s", (claim.get("id_poliza"),)),
@@ -739,26 +748,26 @@ def _import_siniestros(frame: pd.DataFrame) -> int:
             continue
         rows.append((
             sid,
-            normalize_generic_id(_get(row, "id_poliza", "id póliza", "id poliza"), "POL"),
+            normalize_generic_id(_get(row, "id_poliza", "id pÃ³liza", "id poliza"), "POL"),
             normalize_generic_id(_get(row, "id_asegurado", "id asegurado"), "ASE"),
             _date(_get(row, "fecha_siniestro", "fecha siniestro", "fecha_ocurrencia", "fecha ocurrencia")),
             _date(_get(row, "fecha_reporte", "fecha reporte")),
             _text(_get(row, "ramo")),
-            normalize_plate(_get(row, "placa", "placa_vehiculo_asegurado", "placa vehículo asegurado", "placa vehiculo asegurado")),
+            normalize_plate(_get(row, "placa", "placa_vehiculo_asegurado", "placa vehÃ­culo asegurado", "placa vehiculo asegurado")),
             _text(_get(row, "cobertura")),
-            _text(_get(row, "ciudad")),
+            _text(_get(row, "ciudad")) or _text(_get(row, "sucursal")),
             _text(_get(row, "sucursal")),
             normalize_generic_id(_get(row, "id_proveedor", "id proveedor"), "PROV"),
-            _text(_get(row, "descripcion_evento", "descripción del evento", "descripcion del evento")),
+            _text(_get(row, "descripcion_evento", "descripciÃ³n del evento", "descripcion del evento")),
             _bool(_get(row, "docs_completos", "docs completos", "documentos completos")),
             _bool(_get(row, "proveedor_lista_restrictiva", "proveedor en lista restrictiva", "prov_lista_restrictiva", "prov. lista restrictiva")),
-            _int(_get(row, "dias_ocurr_reporte", "días ocurr→reporte", "dias ocurr reporte", "dias_ocurr_reporte", "días ocurrencia reporte")),
-            _int(_get(row, "dias_desde_inicio_poliza", "días desde inicio póliza", "dias desde inicio poliza")),
-            _int(_get(row, "dias_hasta_fin_poliza", "días hasta fin póliza", "dias hasta fin poliza")),
-            _int(_get(row, "n_reclamos_previos", "n° reclamos previos", "reclamos previos", "n_reclamos_previos_asegurado", "n° reclamos previos asegurado")),
+            _int(_get(row, "dias_ocurr_reporte", "dÃ­as ocurrâ†’reporte", "dias ocurr reporte", "dias_ocurr_reporte", "dÃ­as ocurrencia reporte")),
+            _int(_get(row, "dias_desde_inicio_poliza", "dÃ­as desde inicio pÃ³liza", "dias desde inicio poliza")),
+            _int(_get(row, "dias_hasta_fin_poliza", "dÃ­as hasta fin pÃ³liza", "dias hasta fin poliza")),
+            _int(_get(row, "n_reclamos_previos", "nÂ° reclamos previos", "reclamos previos", "n_reclamos_previos_asegurado", "nÂ° reclamos previos asegurado")),
             _money(_get(row, "suma_asegurada", "suma asegurada", "suma_asegurada_$", "suma asegurada ($)")),
-            _num(_get(row, "similitud_narrativa_max", "similitud narrativa máx", "similitud narrativa max", "similitud_narrativa_max")),
-            _text(_get(row, "numero_parte_policial", "número parte policial", "numero parte policial")),
+            _num(_get(row, "similitud_narrativa_max", "similitud narrativa mÃ¡x", "similitud narrativa max", "similitud_narrativa_max")),
+            _text(_get(row, "numero_parte_policial", "nÃºmero parte policial", "numero parte policial")),
             _money(_get(row, "monto_reclamado", "monto reclamado", "monto_reclamado_$", "monto reclamado ($)")),
             _money(_get(row, "monto_estimado", "monto estimado", "monto_estimado_$", "monto estimado ($)")),
             _money(_get(row, "monto_pagado", "monto pagado", "monto_pagado_$", "monto pagado ($)")),
@@ -791,10 +800,10 @@ def _import_siniestros(frame: pd.DataFrame) -> int:
 def _import_polizas(frame: pd.DataFrame) -> int:
     rows = []
     for _, row in frame.iterrows():
-        pid = normalize_generic_id(_get(row, "id_poliza", "id póliza", "id poliza"), "POL")
+        pid = normalize_generic_id(_get(row, "id_poliza", "id pÃ³liza", "id poliza"), "POL")
         if not pid:
             continue
-        rows.append((pid, normalize_generic_id(_get(row, "id_asegurado", "id asegurado"), "ASE"), _text(_get(row, "ramo")), _date(_get(row, "fecha_inicio", "fecha inicio")), _date(_get(row, "fecha_fin", "fecha fin")), _money(_get(row, "suma_asegurada", "suma asegurada", "suma_asegurada_$", "suma asegurada ($)")), _money(_get(row, "prima_anual", "prima anual", "prima_anual_$", "prima anual ($)")), _text(_get(row, "canal_venta", "canal venta")), _text(_get(row, "estado_poliza", "estado póliza", "estado poliza"))))
+        rows.append((pid, normalize_generic_id(_get(row, "id_asegurado", "id asegurado"), "ASE"), _text(_get(row, "ramo")), _date(_get(row, "fecha_inicio", "fecha inicio")), _date(_get(row, "fecha_fin", "fecha fin")), _money(_get(row, "suma_asegurada", "suma asegurada", "suma_asegurada_$", "suma asegurada ($)")), _money(_get(row, "prima_anual", "prima anual", "prima_anual_$", "prima anual ($)")), _text(_get(row, "canal_venta", "canal venta")), _text(_get(row, "estado_poliza", "estado pÃ³liza", "estado poliza"))))
     _executemany("INSERT INTO polizas VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE id_asegurado=VALUES(id_asegurado), ramo=VALUES(ramo), fecha_inicio=VALUES(fecha_inicio), fecha_fin=VALUES(fecha_fin), suma_asegurada=VALUES(suma_asegurada), prima_anual=VALUES(prima_anual), canal_venta=VALUES(canal_venta), estado_poliza=VALUES(estado_poliza)", rows)
     return len(rows)
 
@@ -805,7 +814,7 @@ def _import_asegurados(frame: pd.DataFrame) -> int:
         aid = normalize_generic_id(_get(row, "id_asegurado", "id asegurado"), "ASE")
         if not aid:
             continue
-        rows.append((aid, _text(_get(row, "nombres_asegurado", "nombres asegurado")), _text(_get(row, "segmento")), _text(_get(row, "ciudad")), _text(_get(row, "antiguedad", "antigüedad", "antiguedad_anos", "antigüedad (años)")), _int(_get(row, "n_polizas_activas", "n° pólizas activas", "polizas activas")), _int(_get(row, "n_reclamos_ultimos_12_meses", "n° reclamos últimos 12 meses")), _int(_get(row, "n_reclamos_historico_total", "n° reclamos histórico total")), _int(_get(row, "reclamos_rc_sin_tercero")), _text(_get(row, "perfil_riesgo_historico", "perfil riesgo histórico"))))
+        rows.append((aid, _text(_get(row, "nombres_asegurado", "nombres asegurado")), _text(_get(row, "segmento")), _text(_get(row, "ciudad")), _text(_get(row, "antiguedad", "antigÃ¼edad", "antiguedad_anos", "antigÃ¼edad (aÃ±os)")), _int(_get(row, "n_polizas_activas", "nÂ° pÃ³lizas activas", "polizas activas")), _int(_get(row, "n_reclamos_ultimos_12_meses", "nÂ° reclamos Ãºltimos 12 meses")), _int(_get(row, "n_reclamos_historico_total", "nÂ° reclamos histÃ³rico total")), _int(_get(row, "reclamos_rc_sin_tercero")), _text(_get(row, "perfil_riesgo_historico", "perfil riesgo histÃ³rico"))))
     _executemany("INSERT INTO asegurados VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE nombres_asegurado=VALUES(nombres_asegurado), segmento=VALUES(segmento), ciudad=VALUES(ciudad), antiguedad=VALUES(antiguedad), polizas_activas=VALUES(polizas_activas), reclamos_ultimos_12_meses=VALUES(reclamos_ultimos_12_meses), reclamos_historico_total=VALUES(reclamos_historico_total), reclamos_rc_sin_tercero=VALUES(reclamos_rc_sin_tercero), perfil_riesgo_historico=VALUES(perfil_riesgo_historico)", rows)
     return len(rows)
 
@@ -825,7 +834,7 @@ def _import_proveedores(frame: pd.DataFrame) -> int:
                 candidate = _money(value)
                 if candidate is not None:
                     promedio = candidate
-        rows.append((pid, _text(_get(row, "nombre_proveedor", "nombre proveedor")), _text(_get(row, "tipo")), _text(_get(row, "ciudad")), _int(_get(row, "n_siniestros_asociados", "n° siniestros asociados")), _bool(_get(row, "en_lista_restrictiva", "en lista restrictiva")), _text(_get(row, "motivo_restriccion", "motivo restricción")), observation, promedio))
+        rows.append((pid, _text(_get(row, "nombre_proveedor", "nombre proveedor")), _text(_get(row, "tipo")), _text(_get(row, "ciudad")), _int(_get(row, "n_siniestros_asociados", "nÂ° siniestros asociados")), _bool(_get(row, "en_lista_restrictiva", "en lista restrictiva")), _text(_get(row, "motivo_restriccion", "motivo restricciÃ³n")), observation, promedio))
     _executemany("INSERT INTO proveedores_hackia VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE nombre_proveedor=VALUES(nombre_proveedor), tipo=VALUES(tipo), ciudad=VALUES(ciudad), siniestros_asociados=VALUES(siniestros_asociados), en_lista_restrictiva=VALUES(en_lista_restrictiva), motivo_restriccion=VALUES(motivo_restriccion), observacion_proveedor=VALUES(observacion_proveedor), promedio_monto=VALUES(promedio_monto)", rows)
     return len(rows)
 
@@ -864,52 +873,62 @@ def _build_alerts_for_claim(claim: dict) -> list[dict]:
 
     claim_date = claim.get("fecha_siniestro")
     if pol.get("fecha_fin") and claim_date and claim_date > pol["fecha_fin"]:
-        alerts.append(_alert(sid, "Póliza expirada al momento del siniestro", "critica", "La fecha del siniestro ocurre después del fin de vigencia de la póliza.", "Excel", "fecha_siniestro", str(pol["fecha_fin"]), str(claim_date)))
+        alerts.append(_alert(sid, "PÃ³liza expirada al momento del siniestro", "critica", "La fecha del siniestro ocurre despuÃ©s del fin de vigencia de la pÃ³liza.", "Excel", "fecha_siniestro", str(pol["fecha_fin"]), str(claim_date)))
     if _int(claim.get("dias_desde_inicio_poliza")) is not None and _int(claim.get("dias_desde_inicio_poliza")) <= 10:
-        alerts.append(_alert(sid, "Siniestro cercano al inicio de póliza", "alta", "El evento ocurrió pocos días después del inicio de vigencia.", "Excel", "dias_desde_inicio_poliza", "> 10", claim.get("dias_desde_inicio_poliza")))
-    if claim.get("fecha_siniestro") and claim.get("fecha_reporte") and (claim["fecha_reporte"] - claim["fecha_siniestro"]).days > 7:
-        alerts.append(_alert(sid, "Reporte tardío", "media", "El siniestro fue reportado más de 7 días después del evento.", "Excel", "fecha_reporte", "≤ 7 días", str(claim["fecha_reporte"])))
-    if _int(claim.get("dias_ocurrencia_reporte")) is not None and _int(claim.get("dias_ocurrencia_reporte")) > 7:
-        alerts.append(_alert(sid, "Demora ocurrencia a reporte", "media", "La columna Días Ocurrencia-Reporte supera el umbral de revisión.", "Excel", "dias_ocurrencia_reporte", "≤ 7", claim.get("dias_ocurrencia_reporte")))
+        alerts.append(_alert(sid, "Siniestro cercano al inicio de pÃ³liza", "alta", "El evento ocurriÃ³ pocos dÃ­as despuÃ©s del inicio de vigencia.", "Excel", "dias_desde_inicio_poliza", "> 10", claim.get("dias_desde_inicio_poliza")))
+    explicit_days = _int(claim.get("dias_ocurrencia_reporte"))
+    computed_days = None
+    if claim.get("fecha_siniestro") and claim.get("fecha_reporte"):
+        computed_days = (claim["fecha_reporte"] - claim["fecha_siniestro"]).days
+    delay_days = explicit_days if explicit_days is not None else computed_days
+    if delay_days is not None and delay_days > 7:
+        alerts.append(_alert(sid, "Reporte tardio", "media", "El tiempo entre ocurrencia y reporte supera 7 dias segun el dato operativo disponible.", "Excel", "dias_ocurrencia_reporte", "<= 7 dias", f"{delay_days} dias"))
+    if explicit_days is not None and computed_days is not None and abs(explicit_days - computed_days) > 1:
+        alerts.append(_alert(sid, "Dias de reporte inconsistente", "media", "La diferencia calculada entre fechas no coincide con la columna Dias Ocurrencia-Reporte. Requiere validar el dato antes de concluir.", "Excel", "dias_ocurrencia_reporte", f"{computed_days} dias por fechas", f"{explicit_days} dias en columna"))
     if provider.get("en_lista_restrictiva") or claim.get("proveedor_lista_restrictiva"):
-        alerts.append(_alert(sid, "Proveedor en lista restrictiva", "critica", f"Proveedor con restricción registrada: {provider.get('motivo_restriccion') or 'sin motivo detallado'}.", "Excel", "id_proveedor", "proveedor no restrictivo", claim.get("id_proveedor")))
+        alerts.append(_alert(sid, "Proveedor en lista restrictiva", "critica", f"Proveedor con restricciÃ³n registrada: {provider.get('motivo_restriccion') or 'sin motivo detallado'}.", "Excel", "id_proveedor", "proveedor no restrictivo", claim.get("id_proveedor")))
     if _int(provider.get("siniestros_asociados")) and _int(provider.get("siniestros_asociados")) >= 10:
-        alerts.append(_alert(sid, "Proveedor con alta concentración de siniestros", "alta", "El proveedor aparece asociado a una frecuencia elevada de casos.", "Excel", "siniestros_asociados", "< 10", provider.get("siniestros_asociados")))
+        alerts.append(_alert(sid, "Proveedor con alta concentraciÃ³n de siniestros", "alta", "El proveedor aparece asociado a una frecuencia elevada de casos.", "Excel", "siniestros_asociados", "< 10", provider.get("siniestros_asociados")))
     if claim.get("docs_completos") is False:
-        alerts.append(_alert(sid, "Documentación incompleta", "alta", "El Excel indica que el expediente documental no está completo.", "Excel", "docs_completos", "Sí", "No"))
+        alerts.append(_alert(sid, "DocumentaciÃ³n incompleta", "alta", "El Excel indica que el expediente documental no estÃ¡ completo.", "Excel", "docs_completos", "SÃ­", "No"))
     estimated = _num(claim.get("monto_estimado"))
     claimed = _num(claim.get("monto_reclamado"))
     if estimated and claimed and claimed > estimated * 1.35:
-        alerts.append(_alert(sid, "Monto reclamado superior al estimado", "media", "El monto reclamado supera en más de 35% al monto estimado.", "Excel", "monto_reclamado", f"≤ {estimated * 1.35:.2f}", f"{claimed:.2f}"))
-    for doc in docs:
-        if doc.get("pdf_no_encontrado"):
-            alerts.append(_alert(sid, "PDF faltante", "media", "El documento figura en Excel pero no se encontró el PDF asociado.", "Excel/PDF", "nombre_archivo_pdf", doc.get("nombre_archivo_pdf"), "No encontrado"))
+        alerts.append(_alert(sid, "Monto reclamado superior al estimado", "media", "El monto reclamado supera en mÃ¡s de 35% al monto estimado.", "Excel", "monto_reclamado", f"â‰¤ {estimated * 1.35:.2f}", f"{claimed:.2f}"))
+    missing_docs = [doc for doc in docs if doc.get("pdf_no_encontrado")]
+    if missing_docs:
+        missing_detail = "; ".join(
+            f"{doc.get('id_documento') or 'Sin DOC'} ({doc.get('tipo_documento') or 'tipo no definido'}): {doc.get('nombre_archivo_pdf') or 'sin nombre de archivo'}"
+            for doc in missing_docs[:5]
+        )
+        extra = f" y {len(missing_docs) - 5} mas" if len(missing_docs) > 5 else ""
+        alerts.append(_alert(sid, f"PDFs faltantes ({len(missing_docs)})", "media", f"{len(missing_docs)} documento(s) figuran en Excel pero no tienen PDF vinculado: {missing_detail}{extra}.", "Excel/PDF", "documentos_pdf", "PDF vinculado para cada documento", "No encontrado"))
     if not any("parte" in (d.get("tipo_documento") or "").lower() for d in docs) and claim.get("numero_parte_policial"):
-        alerts.append(_alert(sid, "Parte policial faltante", "alta", "Existe número de parte policial en Excel pero no se vinculó el PDF del parte.", "Excel/PDF", "numero_parte_policial", claim.get("numero_parte_policial"), "PDF no vinculado"))
+        alerts.append(_alert(sid, "Parte policial faltante", "alta", "Existe nÃºmero de parte policial en Excel pero no se vinculÃ³ el PDF del parte.", "Excel/PDF", "numero_parte_policial", claim.get("numero_parte_policial"), "PDF no vinculado"))
     if partes and claim.get("numero_parte_policial"):
         for part in partes:
             if part.get("numero_parte_policial") and str(part["numero_parte_policial"]) != str(claim["numero_parte_policial"]):
-                alerts.append(_alert(sid, "Número de parte policial inconsistente", "alta", "El número de parte del Excel no coincide con el extraído del PDF.", "Parte policial", "numero_parte_policial", claim["numero_parte_policial"], part["numero_parte_policial"]))
+                alerts.append(_alert(sid, "NÃºmero de parte policial inconsistente", "alta", "El nÃºmero de parte del Excel no coincide con el extraÃ­do del PDF.", "Parte policial", "numero_parte_policial", claim["numero_parte_policial"], part["numero_parte_policial"]))
     for declaration in declaraciones:
         if declaration.get("placa") and claim.get("placa") and normalize_plate(declaration["placa"]) != normalize_plate(claim["placa"]):
-            alerts.append(_alert(sid, "Placa inconsistente entre Excel y PDF", "critica", "La placa del Excel no coincide con la declaración de accidente.", "Declaración de accidente", "placa", claim["placa"], declaration["placa"]))
+            alerts.append(_alert(sid, "Placa inconsistente entre Excel y PDF", "critica", "La placa del Excel no coincide con la declaraciÃ³n de accidente.", "DeclaraciÃ³n de accidente", "placa", claim["placa"], declaration["placa"]))
         if declaration.get("fecha_accidente") and claim_date and declaration["fecha_accidente"] != claim_date:
-            alerts.append(_alert(sid, "Fecha de accidente inconsistente", "alta", "La fecha del accidente no coincide entre Excel y declaración.", "Declaración de accidente", "fecha_accidente", str(claim_date), str(declaration["fecha_accidente"])))
+            alerts.append(_alert(sid, "Fecha de accidente inconsistente", "alta", "La fecha del accidente no coincide entre Excel y declaraciÃ³n.", "DeclaraciÃ³n de accidente", "fecha_accidente", str(claim_date), str(declaration["fecha_accidente"])))
     for factura in facturas:
         if factura.get("documento_alterado"):
-            alerts.append(_alert(sid, "Factura marcada como documento alterado", "critica", "El PDF contiene texto de documento alterado.", "Factura", "documento_alterado", "Legítimo", "DOCUMENTO ALTERADO"))
+            alerts.append(_alert(sid, "Factura marcada como documento alterado", "critica", "El PDF contiene texto de documento alterado.", "Factura", "documento_alterado", "LegÃ­timo", "DOCUMENTO ALTERADO"))
         if factura.get("ruc") and not _valid_ec_ruc(factura["ruc"]):
-            alerts.append(_alert(sid, "Factura con RUC inválido", "alta", "El RUC extraído no cumple una validación básica de formato.", "Factura/OCR", "ruc", "13 dígitos válidos", factura["ruc"]))
+            alerts.append(_alert(sid, "Factura con RUC invÃ¡lido", "alta", "El RUC extraÃ­do no cumple una validaciÃ³n bÃ¡sica de formato.", "Factura/OCR", "ruc", "13 dÃ­gitos vÃ¡lidos", factura["ruc"]))
         avg = _num(provider.get("promedio_monto"))
         total = _num(factura.get("total_pagar"))
         if avg and total and total > avg * 1.5:
-            alerts.append(_alert(sid, "Factura superior al promedio del proveedor", "alta", "El total de la factura supera en más de 50% el promedio del proveedor.", "Factura + Excel", "total_pagar", f"≤ {avg * 1.5:.2f}", f"{total:.2f}"))
+            alerts.append(_alert(sid, "Factura superior al promedio del proveedor", "alta", "El total de la factura supera en mÃ¡s de 50% el promedio del proveedor.", "Factura + Excel", "total_pagar", f"â‰¤ {avg * 1.5:.2f}", f"{total:.2f}"))
     if _int(insured.get("reclamos_historico_total")) and _int(insured.get("reclamos_historico_total")) >= 3:
-        alerts.append(_alert(sid, "Asegurado con reclamos previos altos", "media", "El asegurado registra alta frecuencia histórica de reclamos.", "Excel", "reclamos_historico_total", "< 3", insured.get("reclamos_historico_total")))
-    if str(insured.get("perfil_riesgo_historico") or "").lower() in {"alto", "critico", "crítico"}:
-        alerts.append(_alert(sid, "Perfil histórico de riesgo alto", "alta", "El perfil histórico del asegurado está marcado como alto.", "Excel", "perfil_riesgo_historico", "Bajo/Medio", insured.get("perfil_riesgo_historico")))
+        alerts.append(_alert(sid, "Asegurado con reclamos previos altos", "media", "El asegurado registra alta frecuencia histÃ³rica de reclamos.", "Excel", "reclamos_historico_total", "< 3", insured.get("reclamos_historico_total")))
+    if str(insured.get("perfil_riesgo_historico") or "").lower() in {"alto", "critico", "crÃ­tico"}:
+        alerts.append(_alert(sid, "Perfil histÃ³rico de riesgo alto", "alta", "El perfil histÃ³rico del asegurado estÃ¡ marcado como alto.", "Excel", "perfil_riesgo_historico", "Bajo/Medio", insured.get("perfil_riesgo_historico")))
     if _risk_text(claim.get("similitud_narrativa_max")):
-        alerts.append(_alert(sid, "Narrativa similar a otros casos", "media", "La similitud narrativa máxima supera el umbral recomendado.", "Excel/NLP", "similitud_narrativa_max", "< 0.70", claim.get("similitud_narrativa_max")))
+        alerts.append(_alert(sid, "Narrativa similar a otros casos", "media", "La similitud narrativa mÃ¡xima supera el umbral recomendado.", "Excel/NLP", "similitud_narrativa_max", "< 0.70", claim.get("similitud_narrativa_max")))
     return alerts
 
 
@@ -927,46 +946,58 @@ def _build_alerts_for_claim_cached(
     alerts = []
     claim_date = claim.get("fecha_siniestro")
     if pol.get("fecha_fin") and claim_date and claim_date > pol["fecha_fin"]:
-        alerts.append(_alert(sid, "Póliza expirada al momento del siniestro", "critica", "La fecha del siniestro ocurre después del fin de vigencia de la póliza.", "Excel", "fecha_siniestro", str(pol["fecha_fin"]), str(claim_date)))
+        alerts.append(_alert(sid, "PÃ³liza expirada al momento del siniestro", "critica", "La fecha del siniestro ocurre despuÃ©s del fin de vigencia de la pÃ³liza.", "Excel", "fecha_siniestro", str(pol["fecha_fin"]), str(claim_date)))
     if _int(claim.get("dias_desde_inicio_poliza")) is not None and _int(claim.get("dias_desde_inicio_poliza")) <= 10:
-        alerts.append(_alert(sid, "Siniestro cercano al inicio de póliza", "alta", "El evento ocurrió pocos días después del inicio de vigencia.", "Excel", "dias_desde_inicio_poliza", "> 10", claim.get("dias_desde_inicio_poliza")))
-    if claim.get("fecha_siniestro") and claim.get("fecha_reporte") and (claim["fecha_reporte"] - claim["fecha_siniestro"]).days > 7:
-        alerts.append(_alert(sid, "Reporte tardío", "media", "El siniestro fue reportado más de 7 días después del evento.", "Excel", "fecha_reporte", "≤ 7 días", str(claim["fecha_reporte"])))
+        alerts.append(_alert(sid, "Siniestro cercano al inicio de pÃ³liza", "alta", "El evento ocurriÃ³ pocos dÃ­as despuÃ©s del inicio de vigencia.", "Excel", "dias_desde_inicio_poliza", "> 10", claim.get("dias_desde_inicio_poliza")))
+    explicit_days = _int(claim.get("dias_ocurrencia_reporte"))
+    computed_days = None
+    if claim.get("fecha_siniestro") and claim.get("fecha_reporte"):
+        computed_days = (claim["fecha_reporte"] - claim["fecha_siniestro"]).days
+    delay_days = explicit_days if explicit_days is not None else computed_days
+    if delay_days is not None and delay_days > 7:
+        alerts.append(_alert(sid, "Reporte tardio", "media", "El tiempo entre ocurrencia y reporte supera 7 dias segun el dato operativo disponible.", "Excel", "dias_ocurrencia_reporte", "<= 7 dias", f"{delay_days} dias"))
+    if explicit_days is not None and computed_days is not None and abs(explicit_days - computed_days) > 1:
+        alerts.append(_alert(sid, "Dias de reporte inconsistente", "media", "La diferencia calculada entre fechas no coincide con la columna Dias Ocurrencia-Reporte. Requiere validar el dato antes de concluir.", "Excel", "dias_ocurrencia_reporte", f"{computed_days} dias por fechas", f"{explicit_days} dias en columna"))
     if provider.get("en_lista_restrictiva") or claim.get("proveedor_lista_restrictiva"):
-        alerts.append(_alert(sid, "Proveedor en lista restrictiva", "critica", f"Proveedor con restricción registrada: {provider.get('motivo_restriccion') or 'sin motivo detallado'}.", "Excel", "id_proveedor", "proveedor no restrictivo", claim.get("id_proveedor")))
+        alerts.append(_alert(sid, "Proveedor en lista restrictiva", "critica", f"Proveedor con restricciÃ³n registrada: {provider.get('motivo_restriccion') or 'sin motivo detallado'}.", "Excel", "id_proveedor", "proveedor no restrictivo", claim.get("id_proveedor")))
     if _int(provider.get("siniestros_asociados")) and _int(provider.get("siniestros_asociados")) >= 10:
-        alerts.append(_alert(sid, "Proveedor con alta concentración de siniestros", "alta", "El proveedor aparece asociado a una frecuencia elevada de casos.", "Excel", "siniestros_asociados", "< 10", provider.get("siniestros_asociados")))
+        alerts.append(_alert(sid, "Proveedor con alta concentraciÃ³n de siniestros", "alta", "El proveedor aparece asociado a una frecuencia elevada de casos.", "Excel", "siniestros_asociados", "< 10", provider.get("siniestros_asociados")))
     if claim.get("docs_completos") is False:
-        alerts.append(_alert(sid, "Documentación incompleta", "alta", "El Excel indica que el expediente documental no está completo.", "Excel", "docs_completos", "Sí", "No"))
-    for doc in docs:
-        if doc.get("pdf_no_encontrado"):
-            alerts.append(_alert(sid, "PDF faltante", "media", "El documento figura en Excel pero no se encontró el PDF asociado.", "Excel/PDF", "nombre_archivo_pdf", doc.get("nombre_archivo_pdf"), "No encontrado"))
+        alerts.append(_alert(sid, "DocumentaciÃ³n incompleta", "alta", "El Excel indica que el expediente documental no estÃ¡ completo.", "Excel", "docs_completos", "SÃ­", "No"))
+    missing_docs = [doc for doc in docs if doc.get("pdf_no_encontrado")]
+    if missing_docs:
+        missing_detail = "; ".join(
+            f"{doc.get('id_documento') or 'Sin DOC'} ({doc.get('tipo_documento') or 'tipo no definido'}): {doc.get('nombre_archivo_pdf') or 'sin nombre de archivo'}"
+            for doc in missing_docs[:5]
+        )
+        extra = f" y {len(missing_docs) - 5} mas" if len(missing_docs) > 5 else ""
+        alerts.append(_alert(sid, f"PDFs faltantes ({len(missing_docs)})", "media", f"{len(missing_docs)} documento(s) figuran en Excel pero no tienen PDF vinculado: {missing_detail}{extra}.", "Excel/PDF", "documentos_pdf", "PDF vinculado para cada documento", "No encontrado"))
     if not any("parte" in (d.get("tipo_documento") or "").lower() for d in docs) and claim.get("numero_parte_policial"):
-        alerts.append(_alert(sid, "Parte policial faltante", "alta", "Existe número de parte policial en Excel pero no se vinculó el PDF del parte.", "Excel/PDF", "numero_parte_policial", claim.get("numero_parte_policial"), "PDF no vinculado"))
+        alerts.append(_alert(sid, "Parte policial faltante", "alta", "Existe nÃºmero de parte policial en Excel pero no se vinculÃ³ el PDF del parte.", "Excel/PDF", "numero_parte_policial", claim.get("numero_parte_policial"), "PDF no vinculado"))
     if partes and claim.get("numero_parte_policial"):
         for part in partes:
             if part.get("numero_parte_policial") and str(part["numero_parte_policial"]) != str(claim["numero_parte_policial"]):
-                alerts.append(_alert(sid, "Número de parte policial inconsistente", "alta", "El número de parte del Excel no coincide con el extraído del PDF.", "Parte policial", "numero_parte_policial", claim["numero_parte_policial"], part["numero_parte_policial"]))
+                alerts.append(_alert(sid, "NÃºmero de parte policial inconsistente", "alta", "El nÃºmero de parte del Excel no coincide con el extraÃ­do del PDF.", "Parte policial", "numero_parte_policial", claim["numero_parte_policial"], part["numero_parte_policial"]))
     for declaration in declaraciones:
         if declaration.get("placa") and claim.get("placa") and normalize_plate(declaration["placa"]) != normalize_plate(claim["placa"]):
-            alerts.append(_alert(sid, "Placa inconsistente entre Excel y PDF", "critica", "La placa del Excel no coincide con la declaración de accidente.", "Declaración de accidente", "placa", claim["placa"], declaration["placa"]))
+            alerts.append(_alert(sid, "Placa inconsistente entre Excel y PDF", "critica", "La placa del Excel no coincide con la declaraciÃ³n de accidente.", "DeclaraciÃ³n de accidente", "placa", claim["placa"], declaration["placa"]))
         if declaration.get("fecha_accidente") and claim_date and declaration["fecha_accidente"] != claim_date:
-            alerts.append(_alert(sid, "Fecha de accidente inconsistente", "alta", "La fecha del accidente no coincide entre Excel y declaración.", "Declaración de accidente", "fecha_accidente", str(claim_date), str(declaration["fecha_accidente"])))
+            alerts.append(_alert(sid, "Fecha de accidente inconsistente", "alta", "La fecha del accidente no coincide entre Excel y declaraciÃ³n.", "DeclaraciÃ³n de accidente", "fecha_accidente", str(claim_date), str(declaration["fecha_accidente"])))
     for factura in facturas:
         if factura.get("documento_alterado"):
-            alerts.append(_alert(sid, "Factura marcada como documento alterado", "critica", "El PDF contiene texto de documento alterado.", "Factura", "documento_alterado", "Legítimo", "DOCUMENTO ALTERADO"))
+            alerts.append(_alert(sid, "Factura marcada como documento alterado", "critica", "El PDF contiene texto de documento alterado.", "Factura", "documento_alterado", "LegÃ­timo", "DOCUMENTO ALTERADO"))
         if factura.get("ruc") and not _valid_ec_ruc(factura["ruc"]):
-            alerts.append(_alert(sid, "Factura con RUC inválido", "alta", "El RUC extraído no cumple una validación básica de formato.", "Factura/OCR", "ruc", "13 dígitos válidos", factura["ruc"]))
+            alerts.append(_alert(sid, "Factura con RUC invÃ¡lido", "alta", "El RUC extraÃ­do no cumple una validaciÃ³n bÃ¡sica de formato.", "Factura/OCR", "ruc", "13 dÃ­gitos vÃ¡lidos", factura["ruc"]))
         avg = _num(provider.get("promedio_monto"))
         total = _num(factura.get("total_pagar"))
         if avg and total and total > avg * 1.5:
-            alerts.append(_alert(sid, "Factura superior al promedio del proveedor", "alta", "El total de la factura supera en más de 50% el promedio del proveedor.", "Factura + Excel", "total_pagar", f"≤ {avg * 1.5:.2f}", f"{total:.2f}"))
+            alerts.append(_alert(sid, "Factura superior al promedio del proveedor", "alta", "El total de la factura supera en mÃ¡s de 50% el promedio del proveedor.", "Factura + Excel", "total_pagar", f"â‰¤ {avg * 1.5:.2f}", f"{total:.2f}"))
     if _int(insured.get("reclamos_historico_total")) and _int(insured.get("reclamos_historico_total")) >= 3:
-        alerts.append(_alert(sid, "Asegurado con reclamos previos altos", "media", "El asegurado registra alta frecuencia histórica de reclamos.", "Excel", "reclamos_historico_total", "< 3", insured.get("reclamos_historico_total")))
-    if str(insured.get("perfil_riesgo_historico") or "").lower() in {"alto", "critico", "crítico"}:
-        alerts.append(_alert(sid, "Perfil histórico de riesgo alto", "alta", "El perfil histórico del asegurado está marcado como alto.", "Excel", "perfil_riesgo_historico", "Bajo/Medio", insured.get("perfil_riesgo_historico")))
+        alerts.append(_alert(sid, "Asegurado con reclamos previos altos", "media", "El asegurado registra alta frecuencia histÃ³rica de reclamos.", "Excel", "reclamos_historico_total", "< 3", insured.get("reclamos_historico_total")))
+    if str(insured.get("perfil_riesgo_historico") or "").lower() in {"alto", "critico", "crÃ­tico"}:
+        alerts.append(_alert(sid, "Perfil histÃ³rico de riesgo alto", "alta", "El perfil histÃ³rico del asegurado estÃ¡ marcado como alto.", "Excel", "perfil_riesgo_historico", "Bajo/Medio", insured.get("perfil_riesgo_historico")))
     if _risk_text(claim.get("similitud_narrativa_max")):
-        alerts.append(_alert(sid, "Narrativa similar a otros casos", "media", "La similitud narrativa máxima supera el umbral recomendado.", "Excel/NLP", "similitud_narrativa_max", "< 0.70", claim.get("similitud_narrativa_max")))
+        alerts.append(_alert(sid, "Narrativa similar a otros casos", "media", "La similitud narrativa mÃ¡xima supera el umbral recomendado.", "Excel/NLP", "similitud_narrativa_max", "< 0.70", claim.get("similitud_narrativa_max")))
     return alerts
 
 
@@ -1042,14 +1073,14 @@ def _extract_fields(text: str, doc_type: str, filename: str) -> dict:
             "fecha": _date(_match(text, r"\bFecha(?: del accidente)?[:\s]+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2})")),
             "lugar": _match(text, r"\bLugar[:\s]+(.{3,120})"),
             "asegurado": _match(text, r"\bAsegurado[:\s]+(.{3,120})"),
-            "poliza": normalize_generic_id(_match(text, r"\bP[oó]liza[:\s]+([A-Z0-9-]+)"), "POL"),
+            "poliza": normalize_generic_id(_match(text, r"\bP[oÃ³]liza[:\s]+([A-Z0-9-]+)"), "POL"),
             "ruc": _match(text, r"\bRUC[:\s]+(\d{10,13})"),
             "total_pagar": _money(_match(text, r"(?:Total a pagar|Total)[:\s$]+([\d.,]+)")),
-            "numero_factura": _match(text, r"(?:Factura|Nro\.?|Número)[:\s#-]+([A-Z0-9-]+)"),
-            "numero_parte_policial": _match(text, r"(?:Parte Policial|N[úu]mero de parte|Parte No\.?)[:\s#-]+([A-Z0-9-]+)"),
+            "numero_factura": _match(text, r"(?:Factura|Nro\.?|NÃºmero)[:\s#-]+([A-Z0-9-]+)"),
+            "numero_parte_policial": _match(text, r"(?:Parte Policial|N[Ãºu]mero de parte|Parte No\.?)[:\s#-]+([A-Z0-9-]+)"),
             "documento_alterado": "DOCUMENTO ALTERADO" in text.upper(),
-            "caso_marcado": _match(text, r"\bCaso[:\s]+(Fraude|Leg[ií]timo)"),
-            "descripcion": _match(text, r"(?:Descripci[oó]n(?: del accidente)?|Narrativa)[:\s]+(.{20,900})"),
+            "caso_marcado": _match(text, r"\bCaso[:\s]+(Fraude|Leg[iÃ­]timo)"),
+            "descripcion": _match(text, r"(?:Descripci[oÃ³]n(?: del accidente)?|Narrativa)[:\s]+(.{20,900})"),
         }
     )
     if doc_type == "Factura":
@@ -1121,7 +1152,7 @@ def _text(value: Any) -> str | None:
 
 def _bool(value: Any) -> bool | None:
     text = (_text(value) or "").lower()
-    if text in {"si", "sí", "s", "true", "1", "x", "yes"}:
+    if text in {"si", "sÃ­", "s", "true", "1", "x", "yes"}:
         return True
     if text in {"no", "false", "0", "n"}:
         return False
@@ -1182,8 +1213,8 @@ def _detect_document_type(filename: str, text: str) -> str:
     source = f"{filename} {text[:500]}".upper()
     if "FACTURA" in source:
         return "Factura"
-    if re.search(r"\bDA[_-]|DECLARACION|DECLARACIÓN", source):
-        return "Declaración de accidente"
+    if re.search(r"\bDA[_-]|DECLARACION|DECLARACIÃ“N", source):
+        return "DeclaraciÃ³n de accidente"
     if re.search(r"\bPP[_-]|PARTE POLICIAL", source):
         return "Parte policial"
     return "Otro documento"
@@ -1224,15 +1255,15 @@ def _extract_fields(text: str, doc_type: str, filename: str) -> dict:
         "placa": normalize_plate(_match_any(text, [r"\bPlaca[:\s]+([A-Z0-9-]{5,10})", r"\bPlaca[:\s]*\n(?:.*\n){0,8}?([A-Z]{2,4}-?\d{3,4})"])),
         "fecha": _date(_match_any(text, [r"\bFecha(?: del accidente)?[:\s]+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2})", r"\bFecha\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"])),
         "lugar": _match_any(text, [r"\bLugar[:\s]+(.{3,120})", r"\bLugar\s+(.{3,160}?)(?:\s+Velocidad|\n)"]),
-        "asegurado": _match_any(text, [r"\bAsegurado[:\s]+(.{3,120})", r"\bAsegurado\s+(.{3,140}?)(?:\s+Correo|\s+Direcci[oó]n|\n)"]),
-        "poliza": normalize_generic_id(_match_any(text, [r"\bP[oó]liza[:\s]+([A-Z0-9-]+)", r"\bP[oó]liza\s+([A-Z0-9-]{5,60})"]), "POL"),
+        "asegurado": _match_any(text, [r"\bAsegurado[:\s]+(.{3,120})", r"\bAsegurado\s+(.{3,140}?)(?:\s+Correo|\s+Direcci[oÃ³]n|\n)"]),
+        "poliza": normalize_generic_id(_match_any(text, [r"\bP[oÃ³]liza[:\s]+([A-Z0-9-]+)", r"\bP[oÃ³]liza\s+([A-Z0-9-]{5,60})"]), "POL"),
         "ruc": _match(text, r"\bRUC[:\s]+(\d{10,13})"),
         "total_pagar": _money(_match_any(text, [r"TOTAL A PAGAR[\s\S]{0,500}?\$?\s*([\d.,]+)\s*(?:Caso|Este|$)", r"(?:Total a pagar|Total)[:\s$]+([\d.,]+)"])),
-        "numero_factura": _match_any(text, [r"FACTURA\s*N[º°o.]?\s*[:#-]?\s*([A-Z0-9-]+)", r"(?:Factura|Nro\.?|Numero|Número)[:\s#-]+([A-Z0-9-]+)"]),
-        "numero_parte_policial": _match_any(text, [r"Parte Policial No[:.\s]+([A-Z0-9-]+)", r"Parte No[:.\s]+([A-Z0-9-]+)", r"(?:Parte Policial|Numero de parte|Número de parte)[:\s#-]+([A-Z0-9-]+)"]),
+        "numero_factura": _match_any(text, [r"FACTURA\s*N[ÂºÂ°o.]?\s*[:#-]?\s*([A-Z0-9-]+)", r"(?:Factura|Nro\.?|Numero|NÃºmero)[:\s#-]+([A-Z0-9-]+)"]),
+        "numero_parte_policial": _match_any(text, [r"Parte Policial No[:.\s]+([A-Z0-9-]+)", r"Parte No[:.\s]+([A-Z0-9-]+)", r"(?:Parte Policial|Numero de parte|NÃºmero de parte)[:\s#-]+([A-Z0-9-]+)"]),
         "documento_alterado": "DOCUMENTO ALTERADO" in text.upper(),
-        "caso_marcado": _match_any(text, [r"\bCaso[:\s]+(Fraude|Leg[ií]timo|Legitimo)"]),
-        "descripcion": _match_block(text, r"(?:Descripci[oó]n(?: del accidente)?|Narrativa|Explique detalladamente c[oó]mo ocurri[oó] el accidente)[:\s]+", [r"A juicio del conductor", r"DATOS SOBRE EL CONTRARIO", r"INTERVENCI[OÓ]N", r"Parte Elevado", r"PARTICIPANTE", r"\n\s*Documento sint[eé]tico"]),
+        "caso_marcado": _match_any(text, [r"\bCaso[:\s]+(Fraude|Leg[iÃ­]timo|Legitimo)"]),
+        "descripcion": _match_block(text, r"(?:Descripci[oÃ³]n(?: del accidente)?|Narrativa|Explique detalladamente c[oÃ³]mo ocurri[oÃ³] el accidente)[:\s]+", [r"A juicio del conductor", r"DATOS SOBRE EL CONTRARIO", r"INTERVENCI[OÃ“]N", r"Parte Elevado", r"PARTICIPANTE", r"\n\s*Documento sint[eÃ©]tico"]),
     })
     if doc_type == "Factura":
         fields.update(_extract_invoice_fields(text))
@@ -1247,15 +1278,15 @@ def _extract_invoice_fields(text: str) -> dict:
     placa = _match_any(text, [r"Placa:\s*\n(?:.*\n){0,8}?([A-Z]{2,4}-?\d{3,4})", r"\bPlaca[:\s]+([A-Z0-9-]{5,10})"])
     total = _money(_match_any(text, [r"TOTAL A PAGAR[\s\S]{0,500}?\$?\s*([\d.,]+)\s*(?:Caso|Este|$)"]))
     values = {
-        "numero_factura": _match_any(text, [r"N[º°o.]?\s*:\s*([0-9]{3}-[0-9]{3}-[0-9]+)", r"FACTURA[\s\S]{0,80}?([0-9]{3}-[0-9]{3}-[0-9]+)"]),
+        "numero_factura": _match_any(text, [r"N[ÂºÂ°o.]?\s*:\s*([0-9]{3}-[0-9]{3}-[0-9]+)", r"FACTURA[\s\S]{0,80}?([0-9]{3}-[0-9]{3}-[0-9]+)"]),
         "subtotal": _money(_match_any(text, [r"Subtotal(?:\s+\d+%)?\s*\$?\s*([\d.,]+)"])),
         "iva": _money(_match_any(text, [r"IVA(?:\s+\d+%)?\s*\$?\s*([\d.,]+)"])),
-        "cliente": _match_any(text, [r"Cliente:\s*\n(?:.*\n){0,4}?([A-ZÁÉÍÓÚÑa-záéíóúñ][^\n]{3,120})", r"Cliente[:\s]+(.{3,120})"]),
-        "taller_proveedor": _match_any(text, [r"^([A-ZÁÉÍÓÚÑ0-9 .,&-]{5,160})\s*\nServicios", r"(?:Taller|Proveedor)[:\s]+(.{3,120})"]),
-        "vehiculo": _match_any(text, [r"Veh[ií]culo:\s*\n?([^\n]{3,120})"]),
+        "cliente": _match_any(text, [r"Cliente:\s*\n(?:.*\n){0,4}?([A-ZÃÃ‰ÃÃ“ÃšÃ‘a-zÃ¡Ã©Ã­Ã³ÃºÃ±][^\n]{3,120})", r"Cliente[:\s]+(.{3,120})"]),
+        "taller_proveedor": _match_any(text, [r"^([A-ZÃÃ‰ÃÃ“ÃšÃ‘0-9 .,&-]{5,160})\s*\nServicios", r"(?:Taller|Proveedor)[:\s]+(.{3,120})"]),
+        "vehiculo": _match_any(text, [r"Veh[iÃ­]culo:\s*\n?([^\n]{3,120})"]),
         "fecha": _date(_match_any(text, [r"\bFecha:\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"])),
-        "caso_marcado": _match_any(text, [r"\bCaso:\s*(Fraude|Leg[ií]timo|Legitimo|Leg.timo)"]),
-        "descripcion": _match_block(text, r"Descripci[oó]n\s*", [r"V\. Unitario", r"TOTAL A PAGAR", r"Subtotal"]),
+        "caso_marcado": _match_any(text, [r"\bCaso:\s*(Fraude|Leg[iÃ­]timo|Legitimo|Leg.timo)"]),
+        "descripcion": _match_block(text, r"Descripci[oÃ³]n\s*", [r"V\. Unitario", r"TOTAL A PAGAR", r"Subtotal"]),
     }
     if placa:
         values["placa"] = normalize_plate(placa)
@@ -1274,11 +1305,11 @@ def _extract_police_fields(text: str) -> dict:
         "hora": _match_any(text, [r"Hora Aproximada:\s*([0-9:]{4,8})", r"Hora:\s*([0-9:]{4,8})"]),
         "lugar": lugar,
         "placa": normalize_plate(_match_any(text, [r"Vehiculo Placa\s+([A-Z0-9-]{5,10})", r"Placa:\s*([A-Z0-9-]{5,10})"])),
-        "marca": _match_any(text, [r"Marca:\s*([A-Z0-9ÁÉÍÓÚÑ -]{2,60})"]),
-        "modelo": _match_any(text, [r"Modelo:\s*([A-Z0-9ÁÉÍÓÚÑ -]{2,80})"]),
+        "marca": _match_any(text, [r"Marca:\s*([A-Z0-9ÃÃ‰ÃÃ“ÃšÃ‘ -]{2,60})"]),
+        "modelo": _match_any(text, [r"Modelo:\s*([A-Z0-9ÃÃ‰ÃÃ“ÃšÃ‘ -]{2,80})"]),
         "motor": _match_any(text, [r"Motor:\s*([A-Z0-9-]{4,80})"]),
         "chasis": _match_any(text, [r"Chasis:\s*([A-Z0-9-]{8,120})"]),
-        "tipo_accidente": _match_any(text, [r"\[X\]\s*([A-ZÁÉÍÓÚÑa-záéíóúñ ]{3,40})"]),
+        "tipo_accidente": _match_any(text, [r"\[X\]\s*([A-ZÃÃ‰ÃÃ“ÃšÃ‘a-zÃ¡Ã©Ã­Ã³ÃºÃ± ]{3,40})"]),
         "consecuencias": _match_any(text, [r"Consecuencias:\s*(.{3,120})"]),
         "clima": _match_any(text, [r"Clima:\s*(.{2,60})"]),
         "autoridad_agente": _match_any(text, [r"Parte Elevado al Sr/a:\s*(.{3,120})"]),
@@ -1289,13 +1320,13 @@ def _extract_police_fields(text: str) -> dict:
 
 def _extract_declaration_fields(text: str) -> dict:
     return {
-        "asegurado": _match_any(text, [r"Asegurado\s+(.{3,140}?)(?:\s+Correo|\s+Direcci[oó]n|\n)", r"Asegurado[:\s]+(.{3,120})"]),
-        "telefono": _match_any(text, [r"Tel[eé]fono\s+([0-9 +()-]{7,30})"]),
-        "direccion": _match_any(text, [r"Direcci[oó]n\s+(.{3,180}?)(?:\s+Tel[eé]fono|\s+P[oó]liza|\n)"]),
-        "poliza": _match_any(text, [r"P[oó]liza\s+([A-Z0-9-]{5,60})"]),
-        "marca": _match_any(text, [r"Marca\s+([A-Z0-9ÁÉÍÓÚÑ -]{2,60})(?:\s+Modelo|\n)"]),
-        "modelo": _match_any(text, [r"Modelo\s+([A-Z0-9ÁÉÍÓÚÑ -]{2,80})(?:\s+Tipo|\n)"]),
-        "color": _match_any(text, [r"Color\s+([A-ZÁÉÍÓÚÑa-záéíóúñ ]{3,40})(?:\s+Placa|\n)"]),
+        "asegurado": _match_any(text, [r"Asegurado\s+(.{3,140}?)(?:\s+Correo|\s+Direcci[oÃ³]n|\n)", r"Asegurado[:\s]+(.{3,120})"]),
+        "telefono": _match_any(text, [r"Tel[eÃ©]fono\s+([0-9 +()-]{7,30})"]),
+        "direccion": _match_any(text, [r"Direcci[oÃ³]n\s+(.{3,180}?)(?:\s+Tel[eÃ©]fono|\s+P[oÃ³]liza|\n)"]),
+        "poliza": _match_any(text, [r"P[oÃ³]liza\s+([A-Z0-9-]{5,60})"]),
+        "marca": _match_any(text, [r"Marca\s+([A-Z0-9ÃÃ‰ÃÃ“ÃšÃ‘ -]{2,60})(?:\s+Modelo|\n)"]),
+        "modelo": _match_any(text, [r"Modelo\s+([A-Z0-9ÃÃ‰ÃÃ“ÃšÃ‘ -]{2,80})(?:\s+Tipo|\n)"]),
+        "color": _match_any(text, [r"Color\s+([A-ZÃÃ‰ÃÃ“ÃšÃ‘a-zÃ¡Ã©Ã­Ã³ÃºÃ± ]{3,40})(?:\s+Placa|\n)"]),
         "placa": normalize_plate(_match_any(text, [r"Placa\s+([A-Z0-9-]{5,10})"])),
         "motor": _match_any(text, [r"Motor\s+([A-Z0-9-]{4,80})"]),
         "chasis": _match_any(text, [r"Chasis\s+([A-Z0-9-]{8,120})"]),
@@ -1303,11 +1334,11 @@ def _extract_declaration_fields(text: str) -> dict:
         "hora": _match_any(text, [r"Hora\s+([0-9:]{4,8})"]),
         "lugar": _match_any(text, [r"Lugar\s+(.{3,160}?)(?:\s+Velocidad|\n)"]),
         "velocidad": _match_any(text, [r"Velocidad\s+([0-9]+\s*Km/h|[0-9]+)"]),
-        "descripcion": _match_block(text, r"Explique detalladamente.*?accidente[:\s]+", [r"A juicio del conductor", r"DATOS SOBRE EL CONTRARIO", r"INTERVENCI[OÓ]N"]),
+        "descripcion": _match_block(text, r"Explique detalladamente.*?accidente[:\s]+", [r"A juicio del conductor", r"DATOS SOBRE EL CONTRARIO", r"INTERVENCI[OÃ“]N"]),
         "responsable_conductor": _match_block(text, r"A juicio del conductor.*?\n", [r"Nombres y apellidos", r"DATOS SOBRE EL CONTRARIO"]),
-        "datos_contrario": _match_block(text, r"DATOS SOBRE EL CONTRARIO[\s\S]{0,80}", [r"INTERVENCI[OÓ]N DE AUTORIDADES"]),
+        "datos_contrario": _match_block(text, r"DATOS SOBRE EL CONTRARIO[\s\S]{0,80}", [r"INTERVENCI[OÃ“]N DE AUTORIDADES"]),
         "intervencion_autoridades": _match_any(text, [r"agentes tomaron nota del parte\?\s*(.{3,120})"]),
-        "lugar_asistencia_medica": _match_block(text, r"Lugar donde se recibe asistencia m[eé]dica\s*", [r"El que suscribe", r"Nota:", r"DOCUMENTO SINT"]),
+        "lugar_asistencia_medica": _match_block(text, r"Lugar donde se recibe asistencia m[eÃ©]dica\s*", [r"El que suscribe", r"Nota:", r"DOCUMENTO SINT"]),
     }
 
 
@@ -1347,7 +1378,7 @@ def _insert_typed_document(doc_id: str, sid: str | None, doc_type: str, fields: 
     elif doc_type == "Parte policial":
         _execute("DELETE FROM partes_policiales WHERE id_documento=%s", (doc_id,))
         _execute("INSERT INTO partes_policiales (id_documento,id_siniestro,numero_parte_policial,fecha,lugar,narrativa_accidente,observaciones_relevantes) VALUES (%s,%s,%s,%s,%s,%s,%s)", (doc_id, sid, fields.get("numero_parte_policial"), _date(fields.get("fecha")), fields.get("lugar"), fields.get("descripcion"), fields.get("observaciones")))
-    elif doc_type == "Declaración de accidente":
+    elif doc_type == "DeclaraciÃ³n de accidente":
         _execute("DELETE FROM declaraciones_accidente WHERE id_documento=%s", (doc_id,))
         _execute("INSERT INTO declaraciones_accidente (id_documento,id_siniestro,asegurado,poliza,placa,fecha_accidente,lugar,descripcion_accidente) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (doc_id, sid, fields.get("asegurado"), fields.get("poliza"), fields.get("placa"), _date(fields.get("fecha")), fields.get("lugar"), fields.get("descripcion")))
 
@@ -1513,11 +1544,32 @@ def _risk_level(score: int) -> str:
 
 def _score_explanation(score: int, level: str, alerts: list[dict]) -> str:
     top = ", ".join([a["tipo_alerta"] for a in alerts[:4]]) or "sin alertas relevantes"
-    return f"Score {score}/100 ({level}). Factores principales: {top}. Esta alerta requiere revisión humana y no constituye acusación de fraude."
+    return _repair_text(f"Score {score}/100 ({level}). Factores principales: {top}. Esta alerta requiere revision humana y no constituye acusacion de fraude.")
 
 
 def _alert(sid: str, tipo: str, severity: str, explanation: str, source: str, field: str, expected: Any, found: Any) -> dict:
-    return {"id_siniestro": sid, "tipo_alerta": tipo, "severidad": severity, "explicacion": explanation, "fuente_evidencia": source, "campo_detectado": field, "valor_esperado": None if expected is None else str(expected), "valor_encontrado": None if found is None else str(found)}
+    return {
+        "id_siniestro": sid,
+        "tipo_alerta": _repair_text(tipo),
+        "severidad": severity,
+        "explicacion": _repair_text(explanation),
+        "fuente_evidencia": _repair_text(source),
+        "campo_detectado": field,
+        "valor_esperado": None if expected is None else _repair_text(str(expected)),
+        "valor_encontrado": None if found is None else _repair_text(str(found)),
+    }
+
+
+def _repair_text(value: str) -> str:
+    text = str(value)
+    for _ in range(2):
+        if "Ã" not in text and "Â" not in text and "â" not in text:
+            break
+        try:
+            text = text.encode("latin1").decode("utf-8")
+        except UnicodeError:
+            break
+    return text.replace("≤", "<=").replace("≥", ">=")
 
 
 def _fetch_one(query: str, params: tuple = ()) -> dict | None:

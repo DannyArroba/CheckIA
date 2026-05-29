@@ -152,7 +152,7 @@ function buildHackiaDashboardSummary(summaryData, rawClaims, mappedClaims) {
     yellow_cases: byLevel.Medio || 0,
     red_cases: (byLevel.Alto || 0) + (byLevel.Critico || 0),
     total_claim_amount: totalAmount,
-    providers_with_alerts: new Set(rawClaims.filter((claim) => Number(claim.alertas || 0) > 0).map((claim) => claim.proveedor_nombre || claim.id_proveedor).filter(Boolean)).size,
+    providers_with_alerts: new Set(rawClaims.filter((claim) => Number(claim.alertas || 0) > 0).map((claim) => claim.proveedor_nombre || claim.nombre_proveedor || claim.id_proveedor).filter(Boolean)).size,
     risk_distribution: distribution,
     top_claims: mappedClaims.slice(0, 10),
     smart_summary: `Dataset activo con ${summaryData?.counts?.siniestros || rawClaims.length} siniestros importados y ${totalAlerts} alertas de revision. El tablero prioriza casos para analisis humano, sin acusar ni decidir automaticamente.`
@@ -162,8 +162,8 @@ function buildHackiaDashboardSummary(summaryData, rawClaims, mappedClaims) {
 function mapHackiaClaimForDashboard(claim) {
   return {
     claim_id: claim.id_siniestro,
-    city: claim.ciudad || 'Sin ciudad',
-    provider_name: claim.proveedor_nombre || claim.id_proveedor || 'Sin proveedor',
+    city: claim.ciudad || claim.sucursal || 'Sin ciudad',
+    provider_name: claim.proveedor_nombre || claim.nombre_proveedor || claim.id_proveedor || 'Sin proveedor',
     claim_amount: Number(claim.monto_reclamado || 0),
     risk_score: Number(claim.puntaje_riesgo || 0),
     risk_level: claim.nivel_riesgo || 'Bajo'
@@ -173,7 +173,7 @@ function mapHackiaClaimForDashboard(claim) {
 function buildCityRanking(claimsData) {
   const grouped = new Map()
   claimsData.forEach((claim) => {
-    const city = claim.ciudad || 'Sin ciudad'
+    const city = claim.ciudad || claim.sucursal || 'Sin ciudad'
     grouped.set(city, (grouped.get(city) || 0) + 1)
   })
   return [...grouped.entries()].map(([city, claims]) => ({ city, claims })).sort((a, b) => b.claims - a.claims)
@@ -182,7 +182,7 @@ function buildCityRanking(claimsData) {
 function buildProviderRanking(claimsData) {
   const grouped = new Map()
   claimsData.forEach((claim) => {
-    const provider = claim.proveedor_nombre || claim.id_proveedor || 'Sin proveedor'
+    const provider = claim.proveedor_nombre || claim.nombre_proveedor || claim.id_proveedor || 'Sin proveedor'
     const current = grouped.get(provider) || { provider_name: provider, alerts: 0 }
     current.alerts += Number(claim.alertas || 0)
     grouped.set(provider, current)

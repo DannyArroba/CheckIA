@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Cpu, FileSpreadsheet, Files, LoaderCircle, MessageSquarePlus, SearchCheck, Send, ShieldCheck, Sparkles, Trash2, UserRound } from 'lucide-react'
+import { Bot, Cpu, FileSpreadsheet, Files, LoaderCircle, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, SearchCheck, Send, ShieldCheck, Sparkles, Trash2, UserRound } from 'lucide-react'
 import { claimsApi } from '../api/claimsApi.js'
 import { HackiaDetail } from '../pages/Hackia.jsx'
 
@@ -32,6 +32,7 @@ export default function AgentChat() {
   const [status, setStatus] = useState(null)
   const [selectedClaim, setSelectedClaim] = useState(null)
   const [uploadStatus, setUploadStatus] = useState('')
+  const [historyOpen, setHistoryOpen] = useState(false)
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -43,10 +44,10 @@ export default function AgentChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, loading])
 
-  async function loadConversations() {
+  async function loadConversations(activeId = conversationId) {
     const list = await claimsApi.agentConversations().catch(() => [])
     setConversations(list)
-    if (!conversationId && list[0]) openConversation(list[0].conversation_id)
+    if (!activeId && list[0]) openConversation(list[0].conversation_id)
   }
 
   async function openConversation(id) {
@@ -68,7 +69,7 @@ export default function AgentChat() {
     const created = await claimsApi.createConversation()
     setConversationId(created.conversation_id)
     setMessages([welcome])
-    await loadConversations()
+    await loadConversations(created.conversation_id)
   }
 
   async function deleteConversation(id) {
@@ -150,12 +151,22 @@ export default function AgentChat() {
   }
 
   return (
-    <div className="grid h-[calc(100vh-140px)] min-h-[560px] gap-5 xl:grid-cols-[280px_1fr_280px]">
-      <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
-        <button onClick={newChat} className="mb-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-electric px-3 text-sm font-semibold text-white hover:bg-blue-700">
-          <MessageSquarePlus size={17} /> Nuevo chat
-        </button>
-        <div className="space-y-2">
+    <div className={`grid h-[calc(100vh-140px)] min-h-[560px] gap-5 ${historyOpen ? 'xl:grid-cols-[280px_1fr_280px]' : 'xl:grid-cols-[64px_1fr_280px]'}`}>
+      <aside className={`rounded-lg border border-slate-200 bg-white shadow-soft transition-all ${historyOpen ? 'p-4' : 'p-2'}`}>
+        <div className={`mb-4 flex gap-2 ${historyOpen ? 'items-center' : 'flex-col items-stretch'}`}>
+          <button
+            type="button"
+            onClick={() => setHistoryOpen((value) => !value)}
+            className="grid min-h-10 min-w-10 place-items-center rounded-lg border border-slate-200 text-slate-600 hover:border-electric hover:text-electric"
+            title={historyOpen ? 'Minimizar historial' : 'Abrir historial'}
+          >
+            {historyOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+          </button>
+          <button onClick={newChat} className={`${historyOpen ? 'inline-flex flex-1 px-3' : 'grid min-w-10 place-items-center px-0'} min-h-10 items-center justify-center gap-2 rounded-lg bg-electric text-sm font-semibold text-white hover:bg-blue-700`} title="Nuevo chat">
+            <MessageSquarePlus size={17} /> {historyOpen && <span>Nuevo chat</span>}
+          </button>
+        </div>
+        <div className={historyOpen ? 'space-y-2' : 'hidden'}>
           {conversations.length === 0 && <p className="text-sm text-slate-500">Aún no hay conversaciones guardadas.</p>}
           {conversations.map((item) => (
             <div key={item.conversation_id} className={`group flex items-center gap-2 rounded-lg border p-2 ${item.conversation_id === conversationId ? 'border-electric bg-blue-50' : 'border-slate-200'}`}>
@@ -169,6 +180,23 @@ export default function AgentChat() {
             </div>
           ))}
         </div>
+        {!historyOpen && (
+          <div className="space-y-2">
+            {conversations.slice(0, 8).map((item) => (
+              <button
+                key={item.conversation_id}
+                onClick={() => openConversation(item.conversation_id)}
+                className={`relative grid h-10 w-10 place-items-center rounded-lg border ${item.conversation_id === conversationId ? 'border-electric bg-blue-50 text-electric' : 'border-slate-200 text-slate-500 hover:border-electric hover:text-electric'}`}
+                title={`${item.title} - ${item.message_count} mensajes`}
+              >
+                <Bot size={17} />
+                <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-ink px-1 text-[9px] font-bold leading-none text-white">
+                  {Math.min(Number(item.message_count || 0), 99)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </aside>
 
       <section className="flex min-h-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
@@ -223,6 +251,7 @@ export default function AgentChat() {
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && !event.shiftKey) {
                     event.preventDefault()
+                    send()
                   }
                 }}
                 rows={1}
@@ -352,6 +381,14 @@ function MessageText({ text, onClaimClick }) {
             <div key={index} className="flex gap-2">
               <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
               <p className="min-w-0 flex-1"><InlineText text={trimmed.replace(/^[-*]\s+/, '')} onClaimClick={onClaimClick} /></p>
+            </div>
+          )
+        }
+        if (/^\d+\.\s+/.test(trimmed)) {
+          return (
+            <div key={index} className="flex gap-2">
+              <span className="min-w-5 font-bold text-electric">{trimmed.match(/^\d+\./)?.[0]}</span>
+              <p className="min-w-0 flex-1"><InlineText text={trimmed.replace(/^\d+\.\s+/, '')} onClaimClick={onClaimClick} /></p>
             </div>
           )
         }
