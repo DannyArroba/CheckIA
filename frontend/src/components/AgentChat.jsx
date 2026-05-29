@@ -143,7 +143,7 @@ export default function AgentChat() {
     try {
       const result = await claimsApi.uploadHackiaPdfs(files)
       const rejected = result.details?.filter((item) => item.rechazado).length || 0
-      setUploadStatus(`PDFs procesados: ${result.stats.pdfs_procesados}. Omitidos sin SIN/DOC: ${rejected}.`)
+      setUploadStatus(`PDFs aceptados: ${result.stats.pdfs_procesados}. Rechazados por no coincidir con el Excel: ${rejected}.`)
     } catch (error) {
       setUploadStatus(`No se pudieron procesar PDFs: ${error.detail || error.message}`)
     }

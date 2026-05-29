@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import platform
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -27,9 +31,14 @@ from backend.src.services.hackia_import_service import (
     clear_legacy_demo_data,
     hackia_claim_detail,
     hackia_claims,
+    hackia_executive_report,
+    hackia_model_status,
+    hackia_pdf_path,
     hackia_summary,
     hackia_tables,
+    hackia_uploaded_pdfs,
     import_excel_workbook,
+    ocr_runtime_status,
     process_pdf_batch,
     recalculate_hackia_analysis,
 )
@@ -38,7 +47,6 @@ from backend.src.services.claims_service import (
     agent_status,
     cities_ranking,
     dashboard_summary,
-    executive_report,
     get_claim,
     hybrid_status,
     list_claims,
@@ -110,8 +118,14 @@ def _legacy_shape_summary(summary_data: dict, rows: list[dict]) -> dict:
     by_level = {item["risk_level"]: item["count"] for item in distribution}
     mapped = [_legacy_shape_claim(row) for row in rows]
     total_amount = sum(item["claim_amount"] for item in mapped)
+    total_claims = summary_data.get("counts", {}).get("siniestros", len(rows))
+    smart_summary = (
+        f"Dataset HackIAthon activo con {total_claims} siniestros importados. Las alertas son apoyo para revision humana."
+        if total_claims
+        else "Aun no hay siniestros importados. Sube un Excel desde Datos para iniciar el analisis."
+    )
     return {
-        "total_claims": summary_data.get("counts", {}).get("siniestros", len(rows)),
+        "total_claims": total_claims,
         "green_cases": by_level.get("Bajo", 0),
         "yellow_cases": by_level.get("Medio", 0),
         "red_cases": by_level.get("Alto", 0) + by_level.get("Critico", 0),
@@ -119,13 +133,34 @@ def _legacy_shape_summary(summary_data: dict, rows: list[dict]) -> dict:
         "providers_with_alerts": len({row.get("id_proveedor") for row in rows if row.get("alertas") and row.get("id_proveedor")}),
         "risk_distribution": distribution,
         "top_claims": mapped[:10],
-        "smart_summary": f"Dataset HackIAthon activo con {summary_data.get('counts', {}).get('siniestros', len(rows))} siniestros importados. Las alertas son apoyo para revision humana.",
+        "smart_summary": smart_summary,
     }
 
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "app": "CheckIA", "message": "API operativa con datos sinteticos"}
+    return {"status": "ok", "app": "CheckIA", "message": "API operativa"}
+
+
+@app.get("/api/system/status")
+def system_status() -> dict:
+    node_version = None
+    node_path = shutil.which("node")
+    if node_path:
+        try:
+            completed = subprocess.run([node_path, "--version"], capture_output=True, text=True, timeout=2, check=False)
+            node_version = completed.stdout.strip() or None
+        except Exception:
+            node_version = None
+    return {
+        "api": {"ok": True, "name": "FastAPI", "python": sys.version.split()[0], "platform": platform.system()},
+        "frontend": {"ok": True, "name": "Vite/React", "message": "Interfaz cargada en el navegador"},
+        "node": {"ok": bool(node_version), "version": node_version, "path": node_path},
+        "ocr": ocr_runtime_status(),
+        "database": database_status(),
+        "ollama": agent_status(),
+        "hackia": hackia_summary(),
+    }
 
 
 @app.get("/api/claims")
@@ -172,11 +207,14 @@ def city_ranking() -> list[dict]:
 
 @app.get("/api/reports/executive-summary")
 def report() -> dict:
-    return executive_report()
+    return hackia_executive_report()
 
 
 @app.get("/api/model/hybrid-status")
 def model_hybrid_status() -> dict:
+    hackia = hackia_summary()
+    if hackia.get("counts", {}).get("siniestros", 0) > 0:
+        return hackia_model_status()
     return hybrid_status()
 
 
@@ -299,18 +337,25 @@ async def import_hackia_excel(file: UploadFile = File(...)) -> dict:
 
 @app.post("/api/hackia/import-pdfs")
 async def import_hackia_pdfs(files: list[UploadFile] = File(...)) -> dict:
-    PDF_DIR.mkdir(parents=True, exist_ok=True)
+    summary_data = hackia_summary()
+    if summary_data.get("counts", {}).get("siniestros", 0) <= 0:
+        raise HTTPException(status_code=400, detail="Primero sube el Excel con la hoja 1_Siniestros. Los PDFs se vinculan contra esos SIN/DOC.")
+    incoming_dir = PDF_DIR / "_incoming"
+    incoming_dir.mkdir(parents=True, exist_ok=True)
     paths = []
     for file in files:
         if not file.filename or not file.filename.lower().endswith(".pdf"):
             continue
-        path = PDF_DIR / Path(file.filename).name
+        path = incoming_dir / Path(file.filename).name
         path.write_bytes(await file.read())
         paths.append(path)
     if not paths:
         raise HTTPException(status_code=400, detail="No se recibieron PDFs validos.")
     try:
-        return process_pdf_batch(paths)
+        result = process_pdf_batch(paths)
+        for path in paths:
+            path.unlink(missing_ok=True)
+        return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"No se pudieron procesar PDFs: {exc}") from exc
 
@@ -337,6 +382,22 @@ def get_hackia_tables() -> dict:
         return hackia_tables()
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"No se pudo leer tablas HackIAthon: {exc}") from exc
+
+
+@app.get("/api/hackia/pdfs")
+def get_hackia_pdfs() -> list[dict]:
+    try:
+        return hackia_uploaded_pdfs()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"No se pudo leer PDFs subidos: {exc}") from exc
+
+
+@app.get("/api/hackia/pdfs/{id_documento}/download")
+def download_hackia_pdf(id_documento: str) -> FileResponse:
+    path = hackia_pdf_path(id_documento)
+    if not path:
+        raise HTTPException(status_code=404, detail="PDF no encontrado")
+    return FileResponse(path, filename=path.name, media_type="application/pdf")
 
 
 @app.get("/api/hackia/claims/{id_siniestro}")

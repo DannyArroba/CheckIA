@@ -1,5 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Database, FileSpreadsheet, Files, RefreshCw, ScanSearch, Trash2 } from 'lucide-react'
+import {
+  Activity,
+  CheckCircle2,
+  Cpu,
+  Database,
+  FileSpreadsheet,
+  Files,
+  LoaderCircle,
+  RefreshCw,
+  ScanSearch,
+  Server,
+  Trash2,
+  XCircle
+} from 'lucide-react'
 import { claimsApi } from '../api/claimsApi.js'
 import KpiCard from '../components/KpiCard.jsx'
 import CsvValidationModal from '../components/CsvValidationModal.jsx'
@@ -7,17 +20,21 @@ import CsvValidationModal from '../components/CsvValidationModal.jsx'
 export default function DataLab() {
   const [dbStatus, setDbStatus] = useState(null)
   const [hackia, setHackia] = useState(null)
+  const [system, setSystem] = useState(null)
   const [message, setMessage] = useState('')
+  const [processLog, setProcessLog] = useState([])
   const [busy, setBusy] = useState(false)
   const [modal, setModal] = useState(null)
 
   async function refresh() {
-    const [db, hackiaSummary] = await Promise.all([
+    const [db, hackiaSummary, systemStatus] = await Promise.all([
       claimsApi.databaseStatus().catch((error) => ({ connected: false, error: error.message })),
-      claimsApi.hackiaSummary().catch(() => null)
+      claimsApi.hackiaSummary().catch(() => null),
+      claimsApi.systemStatus().catch((error) => ({ error: error.message }))
     ])
     setDbStatus(db)
     setHackia(hackiaSummary)
+    setSystem(systemStatus)
   }
 
   useEffect(() => {
@@ -40,14 +57,20 @@ export default function DataLab() {
 
   async function importExcel(file) {
     setBusy(true)
-    setMessage('Importando Excel multi-hoja del HackIAthon...')
+    startProcess('Importacion de Excel', [
+      `Archivo seleccionado: ${file.name}`,
+      'Subiendo archivo al backend FastAPI.',
+      'Validando hojas requeridas: 1_Siniestros a 5_Documentos.',
+      'Guardando registros en MySQL.',
+      'Recalculando score y alertas.'
+    ])
     try {
       const result = await claimsApi.uploadHackiaExcel(file)
-      setMessage('')
+      finishProcess('Excel importado correctamente.')
       setModal({
         type: 'success',
-        title: 'Excel HackIAthon importado',
-        body: `Se leyeron las hojas ${result.sheets.join(', ')} y se recalculó el análisis de riesgo.`,
+        title: 'Excel importado',
+        body: `Se leyeron las hojas ${result.sheets.join(', ')} y se recalculo el analisis de riesgo.`,
         stats: [
           { label: 'Siniestros', value: result.records.siniestros },
           { label: 'Documentos', value: result.records.documentos },
@@ -56,7 +79,7 @@ export default function DataLab() {
       })
       await refresh()
     } catch (error) {
-      setMessage('')
+      failProcess(error)
       setModal({ title: 'No se pudo importar el Excel', body: String(error.detail || error.message), type: 'error' })
     } finally {
       setBusy(false)
@@ -65,26 +88,33 @@ export default function DataLab() {
 
   async function importPdfs(files) {
     setBusy(true)
-    setMessage(`Procesando ${files.length} PDF(s). Esto puede tardar si algún archivo requiere OCR...`)
+    startProcess('Procesamiento de PDFs', [
+      `Archivos seleccionados: ${files.length}`,
+      'Subiendo PDFs al backend FastAPI.',
+      'Extrayendo texto con parser PDF.',
+      'Aplicando OCR cuando el texto no sea legible.',
+      'Vinculando SIN/DOC, guardando resultados y recalculando alertas.'
+    ])
     try {
       const result = await claimsApi.uploadHackiaPdfs(files)
       const rejected = result.details?.filter((item) => item.rechazado).length || 0
-      setMessage('')
+      finishProcess(`PDFs aceptados: ${result.stats.pdfs_procesados}. Rechazados: ${rejected}.`)
       setModal({
         type: rejected ? 'warning' : 'success',
         title: rejected ? 'PDFs procesados con alertas' : 'PDFs procesados',
         body: rejected
-          ? `${rejected} archivo(s) no tenían SIN-xxxx ni DOC-xxxx y fueron omitidos por no corresponder al expediente.`
-          : 'CheckIA extrajo texto, detectó SIN/DOC y recalculó alertas.',
+          ? `${rejected} archivo(s) fueron rechazados porque no coinciden con los SIN/DOC esperados en el Excel cargado.`
+          : 'CheckIA valido que los PDFs pertenecen al Excel, extrajo texto y recalculo alertas.',
         stats: [
-          { label: 'Procesados', value: result.stats.pdfs_procesados },
+          { label: 'Aceptados', value: result.stats.pdfs_procesados },
+          { label: 'Rechazados', value: result.stats.rechazados ?? rejected },
           { label: 'OCR usado', value: result.stats.ocr_usado },
-          { label: 'Sin relación', value: result.stats.sin_relacion }
+          { label: 'Vinculados', value: result.stats.vinculados }
         ]
       })
       await refresh()
     } catch (error) {
-      setMessage('')
+      failProcess(error)
       setModal({ title: 'No se pudieron procesar los PDFs', body: String(error.detail || error.message), type: 'error' })
     } finally {
       setBusy(false)
@@ -93,12 +123,17 @@ export default function DataLab() {
 
   async function recalculateHackia() {
     setBusy(true)
-    setMessage('Recalculando alertas y score HackIAthon...')
+    startProcess('Recalculo de analisis', [
+      'Leyendo siniestros, polizas, asegurados, proveedores y documentos.',
+      'Evaluando reglas explicables.',
+      'Actualizando alertas_fraude y analisis_fraude en MySQL.'
+    ])
     try {
       const result = await claimsApi.hackiaRecalculate()
-      setMessage(`Análisis recalculado: ${result.siniestros} siniestros y ${result.alertas_generadas} alertas.`)
+      finishProcess(`Analisis recalculado: ${result.siniestros} siniestros y ${result.alertas_generadas} alertas.`)
       await refresh()
     } catch (error) {
+      failProcess(error)
       setModal({ title: 'No se pudo recalcular', body: String(error.detail || error.message), type: 'error' })
     } finally {
       setBusy(false)
@@ -106,35 +141,70 @@ export default function DataLab() {
   }
 
   async function clearHackia() {
-    if (!window.confirm('¿Seguro que quieres borrar el dataset HackIAthon cargado?')) return
+    if (!window.confirm('Seguro que quieres borrar el dataset cargado?')) return
     setBusy(true)
-    setMessage('Borrando dataset HackIAthon actual...')
+    startProcess('Limpieza de dataset', [
+      'Eliminando siniestros, documentos, PDFs extraidos, alertas y analisis.',
+      'Actualizando indicadores de la pantalla.'
+    ])
     try {
       const result = await claimsApi.hackiaClear()
-      setMessage(result.message)
+      finishProcess(result.message)
       await refresh()
     } catch (error) {
+      failProcess(error)
       setModal({ title: 'No se pudo limpiar el dataset', body: String(error.detail || error.message), type: 'error' })
     } finally {
       setBusy(false)
     }
   }
 
+  function startProcess(title, steps) {
+    setMessage(title)
+    setProcessLog([
+      { tone: 'active', text: title },
+      ...steps.map((text) => ({ tone: 'pending', text }))
+    ])
+  }
+
+  function finishProcess(text) {
+    setMessage(text)
+    setProcessLog((items) => [
+      ...items.map((item) => ({ ...item, tone: item.tone === 'active' || item.tone === 'pending' ? 'done' : item.tone })),
+      { tone: 'done', text }
+    ])
+  }
+
+  function failProcess(error) {
+    const detail = String(error.detail || error.message || 'Error desconocido')
+    setMessage(`Error: ${detail}`)
+    setProcessLog((items) => [
+      ...items.map((item) => ({ ...item, tone: item.tone === 'active' ? 'error' : item.tone })),
+      { tone: 'error', text: detail }
+    ])
+  }
+
+  const hasExcelClaims = Number(hackia?.counts?.siniestros || 0) > 0
+
   return (
     <div className="space-y-6">
+      <SystemStatus system={system} dbStatus={dbStatus} />
+
       <div className="grid gap-4 md:grid-cols-4">
         <KpiCard title="Siniestros Excel" value={hackia?.counts?.siniestros ?? 0} helper="Hoja 1_Siniestros" icon={Database} />
         <KpiCard title="Documentos Excel" value={hackia?.counts?.documentos ?? 0} helper="Hoja 5_Documentos" tone="slate" />
-        <KpiCard title="PDFs procesados" value={hackia?.counts?.documentos_extraidos ?? 0} helper="Texto/OCR extraído" tone="yellow" />
+        <KpiCard title="PDFs procesados" value={hackia?.counts?.documentos_extraidos ?? 0} helper="Texto/OCR extraido" tone="yellow" />
         <KpiCard title="Alertas generadas" value={hackia?.counts?.alertas_fraude ?? 0} helper="Score recalculado" tone="red" />
       </div>
+
+      <ProcessPanel message={message} steps={processLog} busy={busy} />
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-xl font-bold text-ink">Base de datos MySQL</h3>
             <p className="mt-1 text-sm text-slate-600">
-              {dbStatus?.connected ? `Conectada a ${dbStatus.database} en ${dbStatus.host}:${dbStatus.port}` : 'Sin conexión confirmada a MySQL/XAMPP.'}
+              {dbStatus?.connected ? `Conectada a ${dbStatus.database} en ${dbStatus.host}:${dbStatus.port}` : 'Sin conexion confirmada a MySQL/XAMPP.'}
             </p>
           </div>
           <button onClick={refresh} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50">
@@ -147,9 +217,9 @@ export default function DataLab() {
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h3 className="text-xl font-bold text-ink">Importación HackIAthon: Excel + PDFs</h3>
+            <h3 className="text-xl font-bold text-ink">Importacion de datos: Excel + PDFs</h3>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
-              También puedes arrastrar el Excel o los PDFs sobre cualquier pantalla de la aplicación. CheckIA validará estructura, SIN/DOC y coherencia básica.
+              Tambien puedes arrastrar el Excel o los PDFs sobre cualquier pantalla de la aplicacion. CheckIA validara estructura, SIN/DOC y coherencia basica.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -170,18 +240,18 @@ export default function DataLab() {
             </span>
             <input type="file" accept=".xlsx,.xls,.xlsm" className="hidden" onChange={uploadHackiaExcel} />
           </label>
-          <label className="flex min-h-20 cursor-pointer items-center gap-3 rounded-lg border border-dashed border-amber-200 bg-amber-50 px-4 text-amber-950 hover:border-amber-400">
+          <label className={`flex min-h-20 items-center gap-3 rounded-lg border border-dashed px-4 ${hasExcelClaims ? 'cursor-pointer border-amber-200 bg-amber-50 text-amber-950 hover:border-amber-400' : 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-500'}`}>
             <Files size={24} className="text-amber-600" />
             <span>
               <strong className="block">Subir lote de PDFs</strong>
-              <span className="text-sm">Acepta selección múltiple de facturas, DA y PP.</span>
+              <span className="text-sm">{hasExcelClaims ? 'Acepta seleccion multiple de facturas, DA y PP.' : 'Primero sube el Excel para vincular SIN/DOC.'}</span>
             </span>
-            <input type="file" accept=".pdf" multiple className="hidden" onChange={uploadHackiaPdfs} />
+            <input type="file" accept=".pdf" multiple disabled={!hasExcelClaims} className="hidden" onChange={uploadHackiaPdfs} />
           </label>
         </div>
         {!!hackia?.logs?.length && (
           <div className="mt-5 rounded-lg bg-slate-50 p-4">
-            <p className="text-sm font-bold text-ink">Últimos procesos</p>
+            <p className="text-sm font-bold text-ink">Ultimos procesos</p>
             <div className="mt-3 space-y-2">
               {hackia.logs.slice(0, 4).map((log, index) => (
                 <p key={`${log.tipo}-${index}`} className="text-sm text-slate-600">
@@ -193,8 +263,114 @@ export default function DataLab() {
         )}
       </section>
 
-      {message && <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-950">{message}</div>}
       <CsvValidationModal modal={modal} onClose={() => setModal(null)} />
+    </div>
+  )
+}
+
+function SystemStatus({ system, dbStatus }) {
+  const cards = [
+    {
+      title: 'Frontend',
+      detail: 'Vite/React activo en navegador',
+      ok: true,
+      icon: Activity
+    },
+    {
+      title: 'Backend',
+      detail: system?.api?.ok ? `FastAPI + Python ${system.api.python}` : 'Sin respuesta del API',
+      ok: Boolean(system?.api?.ok),
+      icon: Server
+    },
+    {
+      title: 'Node',
+      detail: system?.node?.ok ? `Node ${system.node.version}` : 'Node no detectado desde el backend',
+      ok: Boolean(system?.node?.ok),
+      icon: Cpu
+    },
+    {
+      title: 'MySQL',
+      detail: dbStatus?.connected ? `${dbStatus.database} en ${dbStatus.host}:${dbStatus.port}` : dbStatus?.error || 'Sin conexion',
+      ok: Boolean(dbStatus?.connected),
+      icon: Database
+    },
+    {
+      title: 'Ollama',
+      detail: system?.ollama?.available ? `${system.ollama.model} listo` : 'Agente IA sin conexion activa',
+      ok: Boolean(system?.ollama?.available && system?.ollama?.model_found),
+      icon: Cpu
+    },
+    {
+      title: 'OCR PDF',
+      detail: system?.ocr?.ready ? 'Tesseract + Poppler listos' : 'Falta Tesseract o Poppler para PDFs escaneados',
+      ok: Boolean(system?.ocr?.ready),
+      icon: Files
+    }
+  ]
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-bold text-ink">Estado del sistema</h3>
+          <p className="mt-1 text-sm text-slate-600">Servicios necesarios para cargar, procesar y consultar datos.</p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-6">
+        {cards.map((card) => <StatusCard key={card.title} {...card} />)}
+      </div>
+    </section>
+  )
+}
+
+function StatusCard({ title, detail, ok, icon: Icon }) {
+  return (
+    <div className={`rounded-lg border p-4 ${ok ? 'border-emerald-100 bg-emerald-50' : 'border-red-100 bg-red-50'}`}>
+      <div className="flex items-center justify-between gap-3">
+        <Icon size={20} className={ok ? 'text-emerald-700' : 'text-red-700'} />
+        {ok ? <CheckCircle2 size={18} className="text-emerald-700" /> : <XCircle size={18} className="text-red-700" />}
+      </div>
+      <p className={`mt-3 text-sm font-bold ${ok ? 'text-emerald-950' : 'text-red-950'}`}>{title}</p>
+      <p className={`mt-1 text-xs leading-5 ${ok ? 'text-emerald-800' : 'text-red-800'}`}>{detail}</p>
+    </div>
+  )
+}
+
+function ProcessPanel({ message, steps, busy }) {
+  if (!message && !steps.length) return null
+  return (
+    <section className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950">
+      <div className="flex items-center gap-2 font-bold">
+        {busy && <LoaderCircle size={17} className="animate-spin" />}
+        {message}
+      </div>
+      {!!steps.length && (
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {steps.map((step, index) => <ProcessStep key={`${step.text}-${index}`} step={step} />)}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function ProcessStep({ step }) {
+  const tone = step.tone || 'pending'
+  const styles = {
+    active: 'border-blue-200 bg-white text-blue-900',
+    pending: 'border-slate-200 bg-white/70 text-slate-600',
+    done: 'border-emerald-200 bg-white text-emerald-800',
+    error: 'border-red-200 bg-white text-red-800'
+  }
+  return (
+    <div className={`flex items-start gap-2 rounded-lg border px-3 py-2 ${styles[tone] || styles.pending}`}>
+      {tone === 'done' ? (
+        <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+      ) : tone === 'error' ? (
+        <XCircle size={16} className="mt-0.5 shrink-0" />
+      ) : (
+        <LoaderCircle size={16} className={`mt-0.5 shrink-0 ${tone === 'active' ? 'animate-spin' : ''}`} />
+      )}
+      <span>{step.text}</span>
     </div>
   )
 }

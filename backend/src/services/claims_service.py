@@ -11,7 +11,6 @@ from backend.src.ai_agent.claims_agent import ClaimsAgent
 from backend.src.ai_agent.ollama_client import OllamaClient
 from backend.src.explainability.explain_score import explain_claim, risk_level
 from backend.src.features.build_features import build_claim_contexts, build_model_features
-from backend.src.ingestion.load_data import load_all_data
 from backend.src.models.fraud_model import FraudRiskModel
 from backend.src.services.database_service import (
     get_latest_review_actions,
@@ -21,7 +20,6 @@ from backend.src.services.database_service import (
     save_agent_message,
     source_table_counts,
     sync_risk_results,
-    sync_source_tables,
 )
 from backend.src.services.hybrid_analysis_service import (
     has_claims_intent,
@@ -33,7 +31,10 @@ from backend.src.services.hackia_import_service import hackia_agent_context
 
 @lru_cache(maxsize=1)
 def get_claims_dataset() -> pd.DataFrame:
-    data = load_source_tables() if has_source_data() else load_all_data()
+    if not has_source_data():
+        return _empty_claims_dataset()
+
+    data = load_source_tables()
     enriched = build_claim_contexts(data)
     features = build_model_features(enriched)
     model = FraudRiskModel()
@@ -50,6 +51,33 @@ def get_claims_dataset() -> pd.DataFrame:
     enriched["recommended_action"] = enriched["risk_score"].apply(lambda score: risk_level(score)["accion"])
     enriched["explainability"] = enriched.apply(lambda row: explain_claim(row.to_dict()), axis=1)
     return enriched
+
+
+def _empty_claims_dataset() -> pd.DataFrame:
+    return pd.DataFrame({
+        "claim_id": pd.Series(dtype="string"),
+        "anonymous_customer": pd.Series(dtype="string"),
+        "line": pd.Series(dtype="string"),
+        "coverage": pd.Series(dtype="string"),
+        "city": pd.Series(dtype="string"),
+        "provider_name": pd.Series(dtype="string"),
+        "claim_amount": pd.Series(dtype="float"),
+        "risk_score": pd.Series(dtype="float"),
+        "risk_level": pd.Series(dtype="string"),
+        "risk_color": pd.Series(dtype="string"),
+        "recommended_action": pd.Series(dtype="string"),
+        "claim_date": pd.Series(dtype="string"),
+        "report_date": pd.Series(dtype="string"),
+        "provider_id": pd.Series(dtype="string"),
+        "rules": pd.Series(dtype="object"),
+        "missing_count": pd.Series(dtype="float"),
+        "document_statuses": pd.Series(dtype="string"),
+        "model_score": pd.Series(dtype="float"),
+        "anomaly_score": pd.Series(dtype="float"),
+        "nlp_score": pd.Series(dtype="float"),
+        "rule_score": pd.Series(dtype="float"),
+        "explainability": pd.Series(dtype="object"),
+    })
 
 
 def _clean_record(record: dict) -> dict:
@@ -200,6 +228,20 @@ def ask_agent(message: str, conversation_id: int | None = None) -> dict:
         return quick_response
 
     df = get_claims_dataset()
+    if df.empty and has_claims_intent(corrected_message.lower()):
+        hackia_context = _hackia_context_response(corrected_message) or hackia_agent_context(corrected_message)
+        if hackia_context:
+            response = {
+                "answer": hackia_context,
+                "related_claims": re.findall(r"SIN-\d{4,}", hackia_context.upper()),
+                "provider": "mysql+pdf",
+                "suggestions": ["Detalle de SIN-0003", "Top casos HackIA", "Documentos faltantes"],
+                "disclaimer": "Lectura de apoyo para revision humana; no constituye una decision final.",
+                "conversation_id": conversation_id,
+            }
+            save_agent_message("agente", response["answer"], response["provider"], conversation_id)
+            return response
+
     response = ClaimsAgent(df, _review_context()).answer(corrected_message)
     hackia_context = _hackia_context_response(corrected_message)
     if hackia_context:
@@ -478,6 +520,6 @@ def agent_status() -> dict:
 
 
 def sync_database() -> dict:
-    source_counts = source_table_counts() if has_source_data() else sync_source_tables()
+    source_counts = source_table_counts()
     risk_counts = sync_risk_results(get_claims_dataset())
     return {"source": source_counts, "risk": risk_counts}

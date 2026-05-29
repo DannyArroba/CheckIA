@@ -52,11 +52,13 @@ class OllamaClient:
             with urllib.request.urlopen(request, timeout=3) as response:
                 body = json.loads(response.read().decode("utf-8"))
                 models = [item.get("name") for item in body.get("models", [])]
+                model_names = {model for model in models if model}
+                model_names.update(model.split(":", 1)[0] for model in list(model_names))
                 return {
                     "enabled": True,
                     "available": True,
                     "model": self.model,
-                    "model_found": self.model in models,
+                    "model_found": self.model in model_names,
                     "models": models,
                 }
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):

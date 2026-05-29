@@ -8,7 +8,6 @@ import Cases from './pages/Cases.jsx'
 import Hackia from './pages/Hackia.jsx'
 import Agent from './pages/Agent.jsx'
 import DataLab from './pages/DataLab.jsx'
-import Reports from './pages/Reports.jsx'
 import About from './pages/About.jsx'
 
 const pages = {
@@ -17,7 +16,6 @@ const pages = {
   hackia: Hackia,
   agent: Agent,
   data: DataLab,
-  reports: Reports,
   about: About
 }
 
@@ -53,11 +51,12 @@ export default function App() {
         body: rejected.length
           ? `${rejected.length} archivo(s) fueron omitidos porque no son Excel ni PDF.`
           : rejectedPdfs
-            ? `${rejectedPdfs} PDF(s) fueron omitidos porque no tenían SIN-xxxx ni DOC-xxxx.`
+            ? `${rejectedPdfs} PDF(s) fueron rechazados porque no coinciden con los SIN/DOC esperados en el Excel cargado.`
             : 'Los archivos fueron importados y analizados correctamente.',
         stats: [
           { label: 'Excel', value: excelResult ? 1 : 0 },
-          { label: 'PDFs procesados', value: pdfResult?.stats?.pdfs_procesados ?? 0 },
+          { label: 'PDFs aceptados', value: pdfResult?.stats?.pdfs_procesados ?? 0 },
+          { label: 'PDFs rechazados', value: pdfResult?.stats?.rechazados ?? rejectedPdfs },
           { label: 'Alertas', value: excelResult?.analysis?.alertas_generadas ?? pdfResult?.analysis?.alertas_generadas ?? '-' }
         ]
       })
@@ -93,8 +92,8 @@ export default function App() {
       {dragging && (
         <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-ink/40 p-6 backdrop-blur-sm">
           <div className="rounded-lg border border-blue-200 bg-white px-8 py-6 text-center shadow-soft">
-            <p className="text-xl font-bold text-ink">Suelta aquí el Excel o los PDFs</p>
-            <p className="mt-2 text-sm text-slate-600">CheckIA validará hojas, SIN/DOC, texto extraído y coherencia documental.</p>
+            <p className="text-xl font-bold text-ink">Suelta aqui el Excel o los PDFs</p>
+            <p className="mt-2 text-sm text-slate-600">CheckIA validara hojas, SIN/DOC, texto extraido y coherencia documental.</p>
           </div>
         </div>
       )}

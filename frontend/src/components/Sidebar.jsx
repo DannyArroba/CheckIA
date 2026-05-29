@@ -1,13 +1,12 @@
-import { BarChart3, Bot, Database, FileText, Info, ScanSearch, Table2 } from 'lucide-react'
+import { BarChart3, Bot, Database, Info, Table2 } from 'lucide-react'
 import checkiaIcon from '../assets/checkia-icon.png'
 
 const items = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
   { id: 'cases', label: 'Casos', icon: Table2 },
-  { id: 'hackia', label: 'HackIAthon', icon: ScanSearch },
+  { id: 'hackia', label: 'Tablas de informacion', icon: Table2 },
   { id: 'agent', label: 'Agente IA', icon: Bot },
   { id: 'data', label: 'Datos', icon: Database },
-  { id: 'reports', label: 'Reportes', icon: FileText },
   { id: 'about', label: 'Acerca de', icon: Info }
 ]
 

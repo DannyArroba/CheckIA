@@ -20,6 +20,7 @@ async function request(path, options) {
 
 export const claimsApi = {
   health: () => request('/api/health'),
+  systemStatus: () => request('/api/system/status'),
   claims: () => request('/api/claims'),
   claim: (id) => request(`/api/claims/${id}`),
   summary: () => request('/api/dashboard/summary'),
@@ -34,6 +35,8 @@ export const claimsApi = {
   hackiaSummary: () => request('/api/hackia/summary'),
   hackiaClaims: () => request('/api/hackia/claims'),
   hackiaTables: () => request('/api/hackia/tables'),
+  hackiaPdfs: () => request('/api/hackia/pdfs'),
+  hackiaPdfDownloadUrl: (id) => `${API_BASE}/api/hackia/pdfs/${encodeURIComponent(id)}/download`,
   hackiaClaim: (id) => request(`/api/hackia/claims/${id}`),
   hackiaRecalculate: () => request('/api/hackia/recalculate', { method: 'POST' }),
   hackiaClearLegacy: () => request('/api/hackia/clear-legacy', { method: 'POST' }),

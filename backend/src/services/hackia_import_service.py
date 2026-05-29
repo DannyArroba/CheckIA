@@ -265,21 +265,90 @@ def clear_hackia_data() -> dict:
 def process_pdf_batch(paths: list[Path]) -> dict:
     ensure_hackia_schema()
     PDF_DIR.mkdir(parents=True, exist_ok=True)
-    stats = {"pdfs_procesados": 0, "ocr_usado": 0, "vinculados": 0, "sin_relacion": 0, "duplicados": 0, "reprocesados": 0, "errores": 0}
+    stats = {
+        "pdfs_procesados": 0,
+        "ocr_usado": 0,
+        "vinculados": 0,
+        "rechazados": 0,
+        "sin_relacion": 0,
+        "duplicados": 0,
+        "reprocesados": 0,
+        "errores": 0,
+    }
     details = []
     for source_path in paths:
         try:
-            target = PDF_DIR / source_path.name
-            if source_path.resolve() != target.resolve():
-                shutil.copy2(source_path, target)
-            existing = _fetch_one("SELECT id FROM documentos_extraidos WHERE nombre_archivo=%s", (target.name,))
+            filename = source_path.name
+            target = PDF_DIR / filename
+            existing = _fetch_one("SELECT id FROM documentos_extraidos WHERE nombre_archivo=%s", (filename,))
             if existing:
                 stats["duplicados"] += 1
                 stats["reprocesados"] += 1
-            text, method, ocr_used = _extract_pdf_text(target)
-            ids = _ids_from_filename(target.name) | _ids_from_text(text)
-            doc_type = _detect_document_type(target.name, text)
-            fields = _extract_fields(text, doc_type, target.name)
+
+            text, method, ocr_used = _extract_pdf_text(source_path)
+            ids = _merge_detected_ids(_ids_from_filename(filename), _ids_from_text(text))
+            doc_type = _detect_document_type(filename, text)
+            fields = _extract_fields(text, doc_type, filename)
+            id_siniestro = fields.get("id_siniestro") or ids.get("id_siniestro")
+            id_documento = fields.get("id_documento") or ids.get("id_documento")
+
+            if not id_siniestro and not id_documento:
+                _reject_pdf(stats, details, filename, "No se detecto ID de siniestro SIN-xxxx ni ID de documento DOC-xxxx en el nombre o contenido del PDF.")
+                continue
+
+            excel_doc, rejection_reason = _validate_pdf_against_excel(id_documento, id_siniestro, filename, doc_type)
+            if not excel_doc:
+                _reject_pdf(stats, details, filename, rejection_reason, id_siniestro, id_documento, doc_type)
+                continue
+
+            id_documento = excel_doc.get("id_documento") or id_documento
+            id_siniestro = excel_doc.get("id_siniestro") or id_siniestro
+            if source_path.resolve() != target.resolve():
+                shutil.copy2(source_path, target)
+
+            _upsert_document(id_documento, id_siniestro, doc_type, filename, str(target), False)
+            _insert_extracted(id_documento, id_siniestro, doc_type, filename, target, method, text, fields, ocr_used, False)
+            _insert_typed_document(id_documento, id_siniestro, doc_type, fields)
+            stats["pdfs_procesados"] += 1
+            stats["ocr_usado"] += 1 if ocr_used else 0
+            stats["vinculados"] += 1
+            details.append({"archivo": filename, "id_siniestro": id_siniestro, "id_documento": id_documento, "tipo": doc_type, "metodo": method})
+        except Exception as exc:
+            stats["errores"] += 1
+            details.append({"archivo": source_path.name, "error": str(exc)})
+
+    _mark_missing_pdfs()
+    analysis = recalculate_hackia_analysis()
+    _log("pdf", "PDFs procesados", {"stats": stats, "detalles": details[:40], "analisis": analysis})
+    return {"accepted": True, "stats": stats, "details": details, "analysis": analysis}
+
+
+def _process_pdf_batch_legacy(paths: list[Path]) -> dict:
+    ensure_hackia_schema()
+    PDF_DIR.mkdir(parents=True, exist_ok=True)
+    stats = {
+        "pdfs_procesados": 0,
+        "ocr_usado": 0,
+        "vinculados": 0,
+        "rechazados": 0,
+        "sin_relacion": 0,
+        "duplicados": 0,
+        "reprocesados": 0,
+        "errores": 0,
+    }
+    details = []
+    for source_path in paths:
+        try:
+            filename = source_path.name
+            target = PDF_DIR / filename
+            existing = _fetch_one("SELECT id FROM documentos_extraidos WHERE nombre_archivo=%s", (filename,))
+            if existing:
+                stats["duplicados"] += 1
+                stats["reprocesados"] += 1
+            text, method, ocr_used = _extract_pdf_text(source_path)
+            ids = _ids_from_filename(filename) | _ids_from_text(text)
+            doc_type = _detect_document_type(filename, text)
+            fields = _extract_fields(text, doc_type, filename)
             id_siniestro = fields.get("id_siniestro") or ids.get("id_siniestro")
             id_documento = fields.get("id_documento") or ids.get("id_documento")
             if not id_siniestro and not ids.get("id_documento") and not fields.get("id_documento"):
@@ -396,6 +465,151 @@ def hackia_summary() -> dict:
     return {"counts": counts, "risk_distribution": risk, "logs": logs}
 
 
+def hackia_executive_report() -> dict:
+    ensure_hackia_schema()
+    count_row = _fetch_one("SELECT COUNT(*) AS total, COALESCE(SUM(monto_reclamado), 0) AS amount FROM siniestros")
+    total = int(count_row["total"] if count_row else 0)
+    if total == 0:
+        return {
+            "summary": "Aun no hay siniestros importados. Sube un Excel desde Datos para generar el reporte ejecutivo.",
+            "total_cases": 0,
+            "critical_cases": 0,
+            "main_signals": [],
+            "providers": [],
+            "cities": [],
+            "recommendations": [],
+            "limitations": [],
+        }
+
+    amount = float(count_row["amount"] or 0)
+    risk_rows = _fetch_all("SELECT nivel_riesgo, COUNT(*) AS total FROM analisis_fraude GROUP BY nivel_riesgo")
+    risk_counts = {row["nivel_riesgo"]: int(row["total"]) for row in risk_rows}
+    high = risk_counts.get("Alto", 0) + risk_counts.get("Critico", 0)
+    medium = risk_counts.get("Medio", 0)
+
+    top_provider = _fetch_one(
+        """
+        SELECT COALESCE(p.nombre_proveedor, s.id_proveedor, 'Sin proveedor') AS provider_name,
+               AVG(COALESCE(a.puntaje_riesgo, 0)) AS avg_score
+        FROM siniestros s
+        LEFT JOIN proveedores_hackia p ON p.id_proveedor=s.id_proveedor
+        LEFT JOIN analisis_fraude a ON a.id_siniestro=s.id_siniestro
+        GROUP BY provider_name
+        ORDER BY avg_score DESC
+        LIMIT 1
+        """
+    )
+    provider_text = (
+        f"{top_provider['provider_name']} (score promedio {float(top_provider['avg_score'] or 0):.1f})"
+        if top_provider else "sin proveedor destacado"
+    )
+    signals = _fetch_all(
+        """
+        SELECT tipo_alerta AS signal_name, COUNT(*) AS alert_count
+        FROM alertas_fraude
+        GROUP BY tipo_alerta
+        ORDER BY alert_count DESC, signal_name ASC
+        LIMIT 8
+        """
+    )
+    providers = _fetch_all(
+        """
+        SELECT COALESCE(p.nombre_proveedor, s.id_proveedor, 'Sin proveedor') AS provider_name,
+               COUNT(af.id_alerta) AS alerts,
+               ROUND(AVG(COALESCE(a.puntaje_riesgo, 0)), 1) AS avg_score
+        FROM siniestros s
+        LEFT JOIN proveedores_hackia p ON p.id_proveedor=s.id_proveedor
+        LEFT JOIN analisis_fraude a ON a.id_siniestro=s.id_siniestro
+        LEFT JOIN alertas_fraude af ON af.id_siniestro=s.id_siniestro
+        GROUP BY provider_name
+        HAVING alerts > 0
+        ORDER BY alerts DESC, avg_score DESC
+        LIMIT 5
+        """
+    )
+    cities = _fetch_all(
+        """
+        SELECT COALESCE(ciudad, 'Sin ciudad') AS city,
+               COUNT(*) AS claims,
+               SUM(CASE WHEN a.nivel_riesgo IN ('Alto', 'Critico') THEN 1 ELSE 0 END) AS red_cases,
+               ROUND(AVG(COALESCE(a.puntaje_riesgo, 0)), 1) AS avg_score
+        FROM siniestros s
+        LEFT JOIN analisis_fraude a ON a.id_siniestro=s.id_siniestro
+        GROUP BY city
+        ORDER BY red_cases DESC, avg_score DESC
+        LIMIT 5
+        """
+    )
+    return {
+        "summary": (
+            f"Se analizaron {total} siniestros importados por USD {amount:,.0f}. "
+            f"Hay {high} casos de riesgo alto o critico y {medium} de riesgo medio. "
+            f"Proveedor con mayor score promedio: {provider_text}."
+        ),
+        "total_cases": total,
+        "critical_cases": high,
+        "main_signals": [{"signal": row["signal_name"], "count": int(row["alert_count"])} for row in signals],
+        "providers": [{"provider_name": row["provider_name"], "alerts": int(row["alerts"]), "avg_score": float(row["avg_score"] or 0)} for row in providers],
+        "cities": [{"city": row["city"], "claims": int(row["claims"]), "red_cases": int(row["red_cases"] or 0), "avg_score": float(row["avg_score"] or 0)} for row in cities],
+        "recommendations": [
+            "Priorizar revision humana de casos con score superior a 75.",
+            "Validar documentos faltantes, ilegibles o inconsistentes antes de cualquier decision.",
+            "Revisar concentraciones por proveedor y ciudad como patrones operativos, no como acusaciones.",
+        ],
+        "limitations": [
+            "El score es una alerta de revision, no una decision legal ni contractual.",
+            "Requiere gobierno de datos, auditoria y validacion con expertos antes de uso productivo.",
+        ],
+    }
+
+
+def hackia_model_status() -> dict:
+    summary = hackia_summary()
+    risk_counts = {item["nivel_riesgo"]: int(item["total"]) for item in summary.get("risk_distribution", [])}
+    signals = _fetch_all(
+        """
+        SELECT tipo_alerta AS signal_name, COUNT(*) AS alert_count
+        FROM alertas_fraude
+        GROUP BY tipo_alerta
+        ORDER BY alert_count DESC, signal_name ASC
+        LIMIT 5
+        """
+    )
+    top_cases = _fetch_all(
+        """
+        SELECT id_siniestro, puntaje_riesgo, nivel_riesgo
+        FROM analisis_fraude
+        ORDER BY puntaje_riesgo DESC, id_siniestro ASC
+        LIMIT 5
+        """
+    )
+    return {
+        "approach": "Flujo HackIAthon: Excel + PDF/OCR + reglas explicables + agente IA sobre datos importados.",
+        "layers": [
+            {"name": "Validacion Excel", "weight": None, "implemented": True},
+            {"name": "Extraccion PDF/OCR", "weight": None, "implemented": True},
+            {"name": "Reglas explicables", "weight": None, "implemented": True},
+            {"name": "Agente IA/Ollama", "weight": None, "implemented": True},
+        ],
+        "total_cases": int(summary.get("counts", {}).get("siniestros", 0)),
+        "risk_distribution": {
+            "critico": risk_counts.get("Critico", 0),
+            "alto": risk_counts.get("Alto", 0),
+            "medio": risk_counts.get("Medio", 0),
+            "bajo": risk_counts.get("Bajo", 0),
+        },
+        "main_signals": [{"signal": row["signal_name"], "count": int(row["alert_count"])} for row in signals],
+        "top_cases": [
+            {
+                "claim_id": row["id_siniestro"],
+                "risk_score": int(row["puntaje_riesgo"]),
+                "risk_level": row["nivel_riesgo"],
+            }
+            for row in top_cases
+        ],
+    }
+
+
 def hackia_tables() -> dict:
     ensure_hackia_schema()
     return {
@@ -406,6 +620,47 @@ def hackia_tables() -> dict:
         "documentos": _fetch_all("SELECT * FROM documentos ORDER BY id_siniestro, id_documento LIMIT 1000"),
         "analisis": _fetch_all("SELECT * FROM analisis_fraude ORDER BY puntaje_riesgo DESC LIMIT 500"),
     }
+
+
+def hackia_uploaded_pdfs() -> list[dict]:
+    ensure_hackia_schema()
+    return _fetch_all(
+        """
+        SELECT d.id_documento, d.id_siniestro, d.tipo_documento, d.nombre_archivo_pdf, d.ruta_archivo,
+               d.pdf_no_encontrado, d.documento_no_listado_en_excel,
+               de.id AS extraccion_id, de.metodo_extraccion, de.ocr_usado, de.procesado_at,
+               CHAR_LENGTH(COALESCE(de.texto_extraido, '')) AS caracteres_extraidos
+        FROM documentos d
+        LEFT JOIN (
+          SELECT de1.*
+          FROM documentos_extraidos de1
+          INNER JOIN (
+            SELECT id_documento, MAX(id) AS max_id
+            FROM documentos_extraidos
+            GROUP BY id_documento
+          ) latest ON latest.max_id=de1.id
+        ) de ON de.id_documento=d.id_documento
+        WHERE d.ruta_archivo IS NOT NULL AND d.ruta_archivo <> ''
+        ORDER BY d.id_siniestro, d.id_documento
+        LIMIT 1000
+        """
+    )
+
+
+def hackia_pdf_path(id_documento: str) -> Path | None:
+    ensure_hackia_schema()
+    row = _fetch_one(
+        """
+        SELECT ruta_archivo, nombre_archivo_pdf
+        FROM documentos
+        WHERE id_documento=%s AND ruta_archivo IS NOT NULL AND ruta_archivo <> ''
+        """,
+        (id_documento,),
+    )
+    if not row:
+        return None
+    path = Path(row["ruta_archivo"])
+    return path if path.exists() and path.is_file() else None
 
 
 def hackia_claims() -> list[dict]:
@@ -457,7 +712,7 @@ def hackia_claim_detail(id_siniestro: str) -> dict | None:
 
 
 def hackia_agent_context(question: str) -> str:
-    ids = re.findall(r"SIN[- ]?\d{1,6}", question.upper())
+    ids = re.findall(r"SIN\s*[- ]?\s*\d{1,6}", question.upper())
     if ids:
         detail = hackia_claim_detail(ids[0])
         if not detail:
@@ -468,7 +723,8 @@ def hackia_agent_context(question: str) -> str:
         invoices = "; ".join([f"factura {f.get('numero_factura')} RUC {f.get('ruc')} total {f.get('total_pagar')} caso {f.get('caso_marcado')} alterado={f.get('documento_alterado')}" for f in detail["facturas"][:4]])
         police = "; ".join([f"parte {p.get('numero_parte_policial')} placa {p.get('placa')} fecha {p.get('fecha')} tipo {p.get('tipo_accidente')} narrativa {(p.get('narrativa_accidente') or '')[:260]}" for p in detail["partes_policiales"][:3]])
         declarations = "; ".join([f"declaracion asegurado {d.get('asegurado')} placa {d.get('placa')} fecha {d.get('fecha_accidente')} descripcion {(d.get('descripcion_accidente') or '')[:260]}" for d in detail["declaraciones"][:3]])
-        return f"Contexto HackIAthon del siniestro {ids[0]}: analisis={detail['analisis']}; documentos={docs}; facturas={invoices}; partes_policiales={police}; declaraciones={declarations}; alertas={alerts}; texto_pdf={texts}"
+        sid = detail["siniestro"]["id_siniestro"]
+        return f"Contexto HackIAthon del siniestro {sid}: analisis={detail['analisis']}; documentos={docs}; facturas={invoices}; partes_policiales={police}; declaraciones={declarations}; alertas={alerts}; texto_pdf={texts}"
     top = hackia_claims()[:5]
     if not top:
         return ""
@@ -727,11 +983,54 @@ def _extract_pdf_text(path: Path) -> tuple[str, str, bool]:
         from pdf2image import convert_from_path
         import pytesseract
 
-        images = convert_from_path(str(path), dpi=180, first_page=1, last_page=3)
+        tesseract_path = find_tesseract_executable()
+        poppler_bin = find_poppler_bin()
+        if tesseract_path:
+            pytesseract.pytesseract.tesseract_cmd = str(tesseract_path)
+        if not tesseract_path:
+            raise RuntimeError("Tesseract no encontrado")
+        if not poppler_bin:
+            raise RuntimeError("Poppler/pdftoppm no encontrado")
+
+        images = convert_from_path(str(path), dpi=180, first_page=1, last_page=3, poppler_path=str(poppler_bin))
         text = "\n".join(pytesseract.image_to_string(image, lang="spa+eng") for image in images).strip()
         return text, "ocr", True
     except Exception as exc:
         return text or f"OCR no disponible o fallido: {exc}", "pdf_text_fallback", False
+
+
+def find_tesseract_executable() -> Path | None:
+    command = shutil.which("tesseract")
+    if command:
+        return Path(command)
+    candidates = [
+        Path("C:/Program Files/Tesseract-OCR/tesseract.exe"),
+        Path("C:/Program Files (x86)/Tesseract-OCR/tesseract.exe"),
+        Path("C:/Program Files/Autopsy-4.22.1/autopsy/Tesseract-OCR/tesseract.exe"),
+    ]
+    return next((path for path in candidates if path.exists()), None)
+
+
+def find_poppler_bin() -> Path | None:
+    command = shutil.which("pdftoppm")
+    if command:
+        return Path(command).parent
+    local_tools = Path("tools/poppler")
+    if local_tools.exists():
+        match = next(local_tools.rglob("pdftoppm.exe"), None)
+        if match:
+            return match.parent
+    return None
+
+
+def ocr_runtime_status() -> dict:
+    tesseract = find_tesseract_executable()
+    poppler = find_poppler_bin()
+    return {
+        "tesseract": {"ok": bool(tesseract), "path": str(tesseract) if tesseract else None},
+        "poppler": {"ok": bool(poppler), "path": str(poppler) if poppler else None},
+        "ready": bool(tesseract and poppler),
+    }
 
 
 def _extract_fields(text: str, doc_type: str, filename: str) -> dict:
@@ -765,7 +1064,7 @@ def normalize_sinister_id(value: Any) -> str | None:
     text = _text(value)
     if not text:
         return None
-    match = re.search(r"SIN[-\s]?(\d{1,6})", text.upper())
+    match = re.search(r"SIN\s*[-\s]?\s*(\d{1,6})", text.upper())
     return f"SIN-{int(match.group(1)):04d}" if match else None
 
 
@@ -870,6 +1169,15 @@ def _ids_from_text(text: str) -> dict:
     return {"id_siniestro": normalize_sinister_id(text), "id_documento": normalize_document_id(text)}
 
 
+def _merge_detected_ids(*sources: dict) -> dict:
+    merged = {"id_siniestro": None, "id_documento": None}
+    for source in sources:
+        for key in merged:
+            if source.get(key):
+                merged[key] = source[key]
+    return merged
+
+
 def _detect_document_type(filename: str, text: str) -> str:
     source = f"{filename} {text[:500]}".upper()
     if "FACTURA" in source:
@@ -910,7 +1218,7 @@ def _match_block(text: str, start_pattern: str, stop_patterns: list[str]) -> str
 
 
 def _extract_fields(text: str, doc_type: str, filename: str) -> dict:
-    ids = _ids_from_filename(filename) | _ids_from_text(text)
+    ids = _merge_detected_ids(_ids_from_filename(filename), _ids_from_text(text))
     fields = dict(ids)
     fields.update({
         "placa": normalize_plate(_match_any(text, [r"\bPlaca[:\s]+([A-Z0-9-]{5,10})", r"\bPlaca[:\s]*\n(?:.*\n){0,8}?([A-Z]{2,4}-?\d{3,4})"])),
@@ -1120,6 +1428,59 @@ def _find_excel_document(doc_id: str | None, sid: str | None, filename: str) -> 
             if doc_type.lower() in (candidate.get("tipo_documento") or "").lower() or (candidate.get("tipo_documento") or "").lower() in doc_type.lower():
                 return candidate
     return None
+
+
+def _validate_pdf_against_excel(doc_id: str | None, sid: str | None, filename: str, doc_type: str) -> tuple[dict | None, str | None]:
+    if doc_id:
+        row = _fetch_one("SELECT * FROM documentos WHERE id_documento=%s", (doc_id,))
+        if not row:
+            return None, f"El documento {doc_id} no existe en la hoja 5_Documentos del Excel cargado."
+        expected_sid = row.get("id_siniestro")
+        if sid and expected_sid and normalize_sinister_id(sid) != normalize_sinister_id(expected_sid):
+            return None, f"El documento {doc_id} pertenece a {expected_sid}, pero el PDF indica {sid}."
+        return row, None
+
+    row = _fetch_one("SELECT * FROM documentos WHERE nombre_archivo_pdf=%s", (filename,))
+    if row:
+        expected_sid = row.get("id_siniestro")
+        if sid and expected_sid and normalize_sinister_id(sid) != normalize_sinister_id(expected_sid):
+            return None, f"El archivo {filename} esta listado para {expected_sid}, pero el PDF indica {sid}."
+        return row, None
+
+    if not sid:
+        return None, "No se pudo vincular el PDF contra un siniestro/documento del Excel cargado."
+
+    claim = _fetch_one("SELECT id_siniestro FROM siniestros WHERE id_siniestro=%s", (sid,))
+    if not claim:
+        return None, f"El siniestro {sid} no existe en la hoja 1_Siniestros del Excel cargado."
+
+    stem = Path(filename).stem.lower()
+    candidates = _fetch_all("SELECT * FROM documentos WHERE id_siniestro=%s", (sid,))
+    for candidate in candidates:
+        expected = (candidate.get("nombre_archivo_pdf") or "").lower()
+        if expected and (expected == filename.lower() or Path(expected).stem.lower() == stem):
+            return candidate, None
+
+    for candidate in candidates:
+        expected_type = (candidate.get("tipo_documento") or "").lower()
+        incoming_type = doc_type.lower()
+        if expected_type and (incoming_type in expected_type or expected_type in incoming_type):
+            return candidate, None
+
+    return None, f"El PDF indica {sid}, pero no coincide con ningun documento esperado en la hoja 5_Documentos."
+
+
+def _reject_pdf(stats: dict, details: list[dict], filename: str, reason: str | None, sid: str | None = None, doc_id: str | None = None, doc_type: str | None = None) -> None:
+    stats["rechazados"] += 1
+    stats["sin_relacion"] += 1
+    detail = {"archivo": filename, "rechazado": True, "motivo": reason or "PDF no reconocido como documento valido del dataset cargado."}
+    if sid:
+        detail["id_siniestro"] = sid
+    if doc_id:
+        detail["id_documento"] = doc_id
+    if doc_type:
+        detail["tipo"] = doc_type
+    details.append(detail)
 
 
 def _mark_missing_pdfs() -> None:

@@ -24,7 +24,7 @@ export default function Dashboard() {
         setProviders(buildProviderRanking(claimsData))
         setCities(buildCityRanking(claimsData))
       })
-      .catch(() => setError('No se pudo conectar con la API HackIAthon. Ejecuta el backend y carga tu Excel.'))
+      .catch(() => setError('No se pudo conectar con la API. Ejecuta el backend y carga tu Excel.'))
   }, [])
 
   const visibleClaims = useMemo(() => {
@@ -55,7 +55,7 @@ export default function Dashboard() {
 
   if (error) return <EmptyState text={error} />
   if (!summary) return <EmptyState text="Cargando analisis de siniestros..." />
-  if (!summary.total_claims) return <EmptyState text="Aun no hay siniestros HackIAthon cargados. Sube tu Excel desde Datos o arrastralo sobre la pantalla." />
+  if (!summary.total_claims) return <EmptyState text="Aun no hay siniestros cargados. Sube tu Excel desde Datos o arrastralo sobre la pantalla." />
 
   return (
     <div className="space-y-6">
@@ -155,7 +155,7 @@ function buildHackiaDashboardSummary(summaryData, rawClaims, mappedClaims) {
     providers_with_alerts: new Set(rawClaims.filter((claim) => Number(claim.alertas || 0) > 0).map((claim) => claim.proveedor_nombre || claim.id_proveedor).filter(Boolean)).size,
     risk_distribution: distribution,
     top_claims: mappedClaims.slice(0, 10),
-    smart_summary: `Dataset HackIAthon activo con ${summaryData?.counts?.siniestros || rawClaims.length} siniestros importados y ${totalAlerts} alertas de revision. El tablero prioriza casos para analisis humano, sin acusar ni decidir automaticamente.`
+    smart_summary: `Dataset activo con ${summaryData?.counts?.siniestros || rawClaims.length} siniestros importados y ${totalAlerts} alertas de revision. El tablero prioriza casos para analisis humano, sin acusar ni decidir automaticamente.`
   }
 }
 

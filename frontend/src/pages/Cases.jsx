@@ -37,7 +37,7 @@ export default function Cases() {
   return (
     <div className="space-y-5">
       <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950">
-        Esta bandeja usa el dataset HackIAthon importado desde Excel y PDFs. Los casos demo CLM ya no se muestran aqui.
+        Esta bandeja usa el dataset importado desde Excel y PDFs. Los casos demo CLM ya no se muestran aqui.
       </div>
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
         <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px]">
@@ -57,7 +57,7 @@ export default function Cases() {
         <ClaimsTable claims={filtered} onSelect={openClaim} />
       ) : (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-slate-600 shadow-soft">
-          Aun no hay siniestros HackIAthon cargados. Sube tu Excel desde Datos o arrastralo sobre la pantalla.
+          Aun no hay siniestros cargados. Sube tu Excel desde Datos o arrastralo sobre la pantalla.
         </div>
       )}
       {selected && <HackiaDetail detail={selected} onClose={() => setSelected(null)} />}
