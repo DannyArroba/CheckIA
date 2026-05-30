@@ -1035,6 +1035,9 @@ def find_tesseract_executable() -> Path | None:
     if command:
         return Path(command)
     candidates = [
+        Path("/usr/bin/tesseract"),
+        Path("/usr/local/bin/tesseract"),
+        Path("/snap/bin/tesseract"),
         Path("C:/Program Files/Tesseract-OCR/tesseract.exe"),
         Path("C:/Program Files (x86)/Tesseract-OCR/tesseract.exe"),
         Path("C:/Program Files/Autopsy-4.22.1/autopsy/Tesseract-OCR/tesseract.exe"),
@@ -1046,6 +1049,14 @@ def find_poppler_bin() -> Path | None:
     command = shutil.which("pdftoppm")
     if command:
         return Path(command).parent
+    linux_candidates = [
+        Path("/usr/bin/pdftoppm"),
+        Path("/usr/local/bin/pdftoppm"),
+        Path("/snap/bin/pdftoppm"),
+    ]
+    for candidate in linux_candidates:
+        if candidate.exists():
+            return candidate.parent
     local_tools = Path("tools/poppler")
     if local_tools.exists():
         match = next(local_tools.rglob("pdftoppm.exe"), None)

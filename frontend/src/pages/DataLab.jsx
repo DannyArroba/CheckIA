@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Activity,
+  AlertTriangle,
   CheckCircle2,
   Cpu,
   Database,
@@ -57,7 +58,7 @@ export default function DataLab() {
 
   async function importExcel(file) {
     setBusy(true)
-    startProcess('Importacion de Excel', [
+    startProcess('Importación de Excel', [
       `Archivo seleccionado: ${file.name}`,
       'Subiendo archivo al backend FastAPI.',
       'Validando hojas requeridas: 1_Siniestros a 5_Documentos.',
@@ -70,7 +71,7 @@ export default function DataLab() {
       setModal({
         type: 'success',
         title: 'Excel importado',
-        body: `Se leyeron las hojas ${result.sheets.join(', ')} y se recalculo el analisis de riesgo.`,
+        body: `Se leyeron las hojas ${result.sheets.join(', ')} y se recalculó el análisis de riesgo.`,
         stats: [
           { label: 'Siniestros', value: result.records.siniestros },
           { label: 'Documentos', value: result.records.documentos },
@@ -104,7 +105,7 @@ export default function DataLab() {
         title: rejected ? 'PDFs procesados con alertas' : 'PDFs procesados',
         body: rejected
           ? `${rejected} archivo(s) fueron rechazados porque no coinciden con los SIN/DOC esperados en el Excel cargado.`
-          : 'CheckIA valido que los PDFs pertenecen al Excel, extrajo texto y recalculo alertas.',
+          : 'CheckIA validó que los PDFs pertenecen al Excel, extrajo texto y recalculó alertas.',
         stats: [
           { label: 'Aceptados', value: result.stats.pdfs_procesados },
           { label: 'Rechazados', value: result.stats.rechazados ?? rejected },
@@ -123,14 +124,14 @@ export default function DataLab() {
 
   async function recalculateHackia() {
     setBusy(true)
-    startProcess('Recalculo de analisis', [
-      'Leyendo siniestros, polizas, asegurados, proveedores y documentos.',
+    startProcess('Recálculo de análisis', [
+      'Leyendo siniestros, pólizas, asegurados, proveedores y documentos.',
       'Evaluando reglas explicables.',
       'Actualizando alertas_fraude y analisis_fraude en MySQL.'
     ])
     try {
       const result = await claimsApi.hackiaRecalculate()
-      finishProcess(`Analisis recalculado: ${result.siniestros} siniestros y ${result.alertas_generadas} alertas.`)
+      finishProcess(`Análisis recalculado: ${result.siniestros} siniestros y ${result.alertas_generadas} alertas.`)
       await refresh()
     } catch (error) {
       failProcess(error)
@@ -141,10 +142,10 @@ export default function DataLab() {
   }
 
   async function clearHackia() {
-    if (!window.confirm('Seguro que quieres borrar el dataset cargado?')) return
+    if (!window.confirm('¿Seguro que quieres borrar el dataset cargado?')) return
     setBusy(true)
     startProcess('Limpieza de dataset', [
-      'Eliminando siniestros, documentos, PDFs extraidos, alertas y analisis.',
+      'Eliminando siniestros, documentos, PDFs extraídos, alertas y análisis.',
       'Actualizando indicadores de la pantalla.'
     ])
     try {
@@ -193,7 +194,7 @@ export default function DataLab() {
       <div className="grid gap-4 md:grid-cols-4">
         <KpiCard title="Siniestros Excel" value={hackia?.counts?.siniestros ?? 0} helper="Hoja 1_Siniestros" icon={Database} />
         <KpiCard title="Documentos Excel" value={hackia?.counts?.documentos ?? 0} helper="Hoja 5_Documentos" tone="slate" />
-        <KpiCard title="PDFs procesados" value={hackia?.counts?.documentos_extraidos ?? 0} helper="Texto/OCR extraido" tone="yellow" />
+        <KpiCard title="PDFs procesados" value={hackia?.counts?.documentos_extraidos ?? 0} helper="Texto/OCR extraído" tone="yellow" />
         <KpiCard title="Alertas generadas" value={hackia?.counts?.alertas_fraude ?? 0} helper="Score recalculado" tone="red" />
       </div>
 
@@ -204,7 +205,7 @@ export default function DataLab() {
           <div>
             <h3 className="text-xl font-bold text-ink">Base de datos MySQL</h3>
             <p className="mt-1 text-sm text-slate-600">
-              {dbStatus?.connected ? `Conectada a ${dbStatus.database} en ${dbStatus.host}:${dbStatus.port}` : 'Sin conexion confirmada a MySQL/XAMPP.'}
+              {dbStatus?.connected ? `Conectada a ${dbStatus.database} en ${dbStatus.host}:${dbStatus.port}` : 'Sin conexión confirmada a MySQL/XAMPP.'}
             </p>
           </div>
           <button onClick={refresh} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50">
@@ -217,9 +218,9 @@ export default function DataLab() {
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h3 className="text-xl font-bold text-ink">Importacion de datos: Excel + PDFs</h3>
+            <h3 className="text-xl font-bold text-ink">Importación de datos: Excel + PDFs</h3>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
-              Tambien puedes arrastrar el Excel o los PDFs sobre cualquier pantalla de la aplicacion. CheckIA validara estructura, SIN/DOC y coherencia basica.
+              También puedes arrastrar el Excel o los PDFs sobre cualquier pantalla de la aplicación. CheckIA validará estructura, SIN/DOC y coherencia básica.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -244,18 +245,18 @@ export default function DataLab() {
             <Files size={24} className="text-amber-600" />
             <span>
               <strong className="block">Subir lote de PDFs</strong>
-              <span className="text-sm">{hasExcelClaims ? 'Acepta seleccion multiple de facturas, DA y PP.' : 'Primero sube el Excel para vincular SIN/DOC.'}</span>
+              <span className="text-sm">{hasExcelClaims ? 'Acepta selección múltiple de facturas, DA y PP.' : 'Primero sube el Excel para vincular SIN/DOC.'}</span>
             </span>
             <input type="file" accept=".pdf" multiple disabled={!hasExcelClaims} className="hidden" onChange={uploadHackiaPdfs} />
           </label>
         </div>
         {!!hackia?.logs?.length && (
           <div className="mt-5 rounded-lg bg-slate-50 p-4">
-            <p className="text-sm font-bold text-ink">Ultimos procesos</p>
+            <p className="text-sm font-bold text-ink">Últimos procesos</p>
             <div className="mt-3 space-y-2">
               {hackia.logs.slice(0, 4).map((log, index) => (
                 <p key={`${log.tipo}-${index}`} className="text-sm text-slate-600">
-                  <strong>{log.tipo}:</strong> {log.mensaje}
+                  <strong>{cleanUiText(log.tipo)}:</strong> {cleanUiText(log.mensaje)}
                 </p>
               ))}
             </div>
@@ -269,6 +270,17 @@ export default function DataLab() {
 }
 
 function SystemStatus({ system, dbStatus }) {
+  const ollamaReady = Boolean(system?.ollama?.available && system?.ollama?.model_found)
+  const ollamaDetail = system?.ollama?.available
+    ? `${system.ollama.model} listo${system.ollama.using_fallback ? ` (respaldo de ${system.ollama.configured_model})` : ''}`
+    : 'Agente IA sin conexión activa'
+  const ocrReady = Boolean(system?.ocr?.ready)
+  const popplerReady = Boolean(system?.ocr?.poppler?.ok)
+  const ocrDetail = ocrReady
+    ? 'Tesseract + Poppler listos'
+    : popplerReady
+      ? 'Poppler listo; falta Tesseract para OCR de PDFs escaneados'
+      : 'Falta Poppler o Tesseract para PDFs escaneados'
   const cards = [
     {
       title: 'Frontend',
@@ -290,20 +302,22 @@ function SystemStatus({ system, dbStatus }) {
     },
     {
       title: 'MySQL',
-      detail: dbStatus?.connected ? `${dbStatus.database} en ${dbStatus.host}:${dbStatus.port}` : dbStatus?.error || 'Sin conexion',
+      detail: dbStatus?.connected ? `${dbStatus.database} en ${dbStatus.host}:${dbStatus.port}` : dbStatus?.error || 'Sin conexión',
       ok: Boolean(dbStatus?.connected),
       icon: Database
     },
     {
       title: 'Ollama',
-      detail: system?.ollama?.available ? `${system.ollama.model} listo` : 'Agente IA sin conexion activa',
-      ok: Boolean(system?.ollama?.available && system?.ollama?.model_found),
+      detail: ollamaDetail,
+      ok: ollamaReady,
+      tone: ollamaReady ? 'ok' : 'error',
       icon: Cpu
     },
     {
       title: 'OCR PDF',
-      detail: system?.ocr?.ready ? 'Tesseract + Poppler listos' : 'Falta Tesseract o Poppler para PDFs escaneados',
-      ok: Boolean(system?.ocr?.ready),
+      detail: ocrDetail,
+      ok: ocrReady,
+      tone: ocrReady ? 'ok' : popplerReady ? 'warning' : 'error',
       icon: Files
     }
   ]
@@ -323,17 +337,73 @@ function SystemStatus({ system, dbStatus }) {
   )
 }
 
-function StatusCard({ title, detail, ok, icon: Icon }) {
+function StatusCard({ title, detail, ok, tone, icon: Icon }) {
+  const state = tone || (ok ? 'ok' : 'error')
+  const styles = {
+    ok: {
+      box: 'border-emerald-100 bg-emerald-50',
+      icon: 'text-emerald-700',
+      title: 'text-emerald-950',
+      text: 'text-emerald-800',
+      badge: <CheckCircle2 size={18} className="text-emerald-700" />
+    },
+    warning: {
+      box: 'border-amber-100 bg-amber-50',
+      icon: 'text-amber-700',
+      title: 'text-amber-950',
+      text: 'text-amber-800',
+      badge: <AlertTriangle size={18} className="text-amber-700" />
+    },
+    error: {
+      box: 'border-red-100 bg-red-50',
+      icon: 'text-red-700',
+      title: 'text-red-950',
+      text: 'text-red-800',
+      badge: <XCircle size={18} className="text-red-700" />
+    }
+  }[state]
   return (
-    <div className={`rounded-lg border p-4 ${ok ? 'border-emerald-100 bg-emerald-50' : 'border-red-100 bg-red-50'}`}>
+    <div className={`rounded-lg border p-4 ${styles.box}`}>
       <div className="flex items-center justify-between gap-3">
-        <Icon size={20} className={ok ? 'text-emerald-700' : 'text-red-700'} />
-        {ok ? <CheckCircle2 size={18} className="text-emerald-700" /> : <XCircle size={18} className="text-red-700" />}
+        <Icon size={20} className={styles.icon} />
+        {styles.badge}
       </div>
-      <p className={`mt-3 text-sm font-bold ${ok ? 'text-emerald-950' : 'text-red-950'}`}>{title}</p>
-      <p className={`mt-1 text-xs leading-5 ${ok ? 'text-emerald-800' : 'text-red-800'}`}>{detail}</p>
+      <p className={`mt-3 text-sm font-bold ${styles.title}`}>{title}</p>
+      <p className={`mt-1 text-xs leading-5 ${styles.text}`}>{detail}</p>
     </div>
   )
+}
+
+function cleanUiText(value) {
+  if (value === null || value === undefined) return ''
+  let text = String(value)
+  const replacements = {
+    analisis: 'análisis',
+    Analisis: 'Análisis',
+    importacion: 'importación',
+    Importacion: 'Importación',
+    recalculo: 'recálculo',
+    Recalculo: 'Recálculo',
+    'AnÃ¡lisis': 'Análisis',
+    'anÃ¡lisis': 'análisis',
+    'ImportaciÃ³n': 'Importación',
+    'importaciÃ³n': 'importación',
+    'recalculÃ³': 'recalculó',
+    'extraÃ­do': 'extraído',
+    'pÃ³lizas': 'pólizas',
+    'Ã¡': 'á',
+    'Ã©': 'é',
+    'Ã­': 'í',
+    'Ã³': 'ó',
+    'Ãº': 'ú',
+    'Ã±': 'ñ',
+    'Â¿': '¿',
+    'Â¡': '¡'
+  }
+  Object.entries(replacements).forEach(([bad, good]) => {
+    text = text.replaceAll(bad, good)
+  })
+  return text
 }
 
 function ProcessPanel({ message, steps, busy }) {

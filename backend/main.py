@@ -145,10 +145,10 @@ def health() -> dict:
 @app.get("/api/system/status")
 def system_status() -> dict:
     node_version = None
-    node_path = shutil.which("node")
+    node_path = find_node_executable()
     if node_path:
         try:
-            completed = subprocess.run([node_path, "--version"], capture_output=True, text=True, timeout=2, check=False)
+            completed = subprocess.run([str(node_path), "--version"], capture_output=True, text=True, timeout=2, check=False)
             node_version = completed.stdout.strip() or None
         except Exception:
             node_version = None
@@ -161,6 +161,26 @@ def system_status() -> dict:
         "ollama": agent_status(),
         "hackia": hackia_summary(),
     }
+
+
+def find_node_executable() -> Path | None:
+    command = shutil.which("node")
+    if command:
+        return Path(command)
+    candidates = [
+        Path("/usr/bin/node"),
+        Path("/usr/local/bin/node"),
+        Path("/snap/bin/node"),
+        Path("/root/.nvm/versions/node"),
+    ]
+    for path in candidates:
+        if path.is_file():
+            return path
+        if path.is_dir():
+            match = next(path.rglob("bin/node"), None)
+            if match and match.exists():
+                return match
+    return None
 
 
 @app.get("/api/claims")

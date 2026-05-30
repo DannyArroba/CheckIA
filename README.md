@@ -1,93 +1,170 @@
 # CheckIA
 
-CheckIA es una aplicación web para analizar siniestros de seguros con inteligencia artificial explicable. El sistema calcula un score de 0 a 100, clasifica cada caso con semáforo de riesgo y entrega al analista humano las señales que recomiendan revisión.
+CheckIA es una aplicación web para apoyar la revisión de siniestros de seguros con inteligencia artificial explicable. El sistema importa datos sintéticos desde Excel, procesa documentos PDF, detecta posibles señales de riesgo, calcula un score por siniestro y entrega explicaciones claras para que un analista humano priorice la revisión.
 
 El prototipo responde al reto **Detector de Posibles Fraudes en Siniestros usando Inteligencia Artificial** de Aseguradora del Sur.
 
 ## Objetivo
 
-Ayudar a priorizar casos con posible riesgo sin acusar fraude, sin rechazar automáticamente siniestros y sin tomar decisiones legales. CheckIA usa lenguaje de apoyo operativo: posible riesgo, alerta de revisión, revisión recomendada, caso prioritario y requiere análisis humano.
+CheckIA ayuda a identificar patrones anómalos o inconsistencias en siniestros, pólizas, asegurados, proveedores y documentos. La aplicación no acusa fraude, no rechaza automáticamente siniestros, no sustituye el análisis humano y no toma decisiones legales.
+
+El lenguaje de la aplicación está orientado a apoyo operativo:
+
+- posible riesgo
+- alerta de revisión
+- revisión recomendada
+- caso prioritario
+- requiere análisis humano
+
+## Funcionalidades
+
+- Importación de Excel con varias hojas: `1_Siniestros`, `2_Polizas`, `3_Asegurados`, `4_Proveedores` y `5_Documentos`.
+- Carga de lotes de PDFs: declaraciones de accidente, facturas, partes policiales y otros documentos relacionados.
+- Extracción de texto PDF directa y OCR cuando el PDF viene escaneado.
+- Relación automática por `SIN-0001`, `DOC-0001`, nombre de archivo y campos internos del documento.
+- Validación de documentos faltantes, documentos no listados, PDFs duplicados e inconsistencias.
+- Cálculo de alertas explicables y score de riesgo.
+- Dashboard con KPIs, gráficos interactivos, filtros acumulables y ranking de casos.
+- Bandeja de casos con búsqueda, ordenamiento, filtros y detalle completo.
+- Agente IA con Ollama para consultar siniestros, documentos, alertas, proveedores y patrones.
+- Reporte ejecutivo para auditoría o presentación.
+- Estado del sistema para revisar Backend, MySQL, Node, Ollama, Poppler y Tesseract.
+
+## Arquitectura
+
+```text
+frontend/              React + Vite + TailwindCSS
+backend/               FastAPI + servicios de análisis
+backend/src/rules      Reglas de riesgo explicables
+backend/src/models     Modelo ML y anomalías
+backend/src/ai_agent   Agente IA con Ollama
+backend/src/services   Importación Excel/PDF, OCR, scoring y consultas
+database/              Esquema SQL MySQL/MariaDB
+docs/                  Documentación técnica, datos, reglas, IA y limitaciones
+presentation/          Guion de pitch
+```
 
 ## Tecnologías
 
 - Frontend: React, Vite, TailwindCSS, Recharts, lucide-react.
-- Backend: FastAPI, pandas, numpy, scikit-learn.
-- Enfoque híbrido: ML + NLP + agente de IA para consultas en lenguaje natural.
-- ML: RandomForestClassifier e IsolationForest para riesgo y anomalías.
-- NLP: TF-IDF y similitud de coseno para narrativas parecidas.
-- Agente IA local: Ollama con `checkia-gemma` para redactar respuestas sobre datos calculados.
-- Datos: CSV sintéticos dentro de `backend/data`.
-- Base de datos: MySQL/MariaDB con esquema en `database/checkia.sql`.
+- Backend: Python, FastAPI, pandas, numpy, scikit-learn.
+- Base de datos: MySQL o MariaDB.
+- IA local: Ollama con `checkia-gemma` o respaldo `gemma2:2b`.
+- NLP: TF-IDF y similitud de coseno.
+- OCR/PDF: Poppler, Tesseract, pdfplumber, pdf2image y pytesseract.
 
-## Instalación Backend
+## Requisitos
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn backend.main:app --reload
-```
+- Python 3.11 o superior.
+- Node.js 20 o superior.
+- MySQL/MariaDB local o XAMPP.
+- Ollama instalado.
+- Poppler y Tesseract para OCR.
 
-API local: `http://127.0.0.1:8000`
+## Variables de entorno
 
-## Base de Datos
-
-El archivo `database/checkia.sql` crea la base `checkia` con clientes, pólizas, proveedores, siniestros, documentos, resultados de riesgo, reglas activadas y mensajes del agente.
-
-Para MySQL/MariaDB:
+Copia el archivo de ejemplo:
 
 ```bash
-mysql -u root -p < database/checkia.sql
+cp .env.example .env
 ```
 
-Con XAMPP normalmente funciona con:
+En Windows PowerShell:
 
-```text
+```powershell
+Copy-Item .env.example .env
+```
+
+Configuración típica local:
+
+```env
+APP_NAME=CheckIA
+APP_ENV=local
+API_HOST=127.0.0.1
+API_PORT=8000
+FRONTEND_ORIGIN=http://localhost:5173
+
+DB_ENABLED=true
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=checkia
-```
 
-La página **Datos** permite verificar conexión, sincronizar CSV y resultados IA, generar nuevos CSV sintéticos descargables, cargar un CSV desde tu PC y comprobar que dashboard/casos/agente se actualizan. Los CSV generados usan `;` y `utf-8-sig` para abrirse correctamente por columnas en Excel.
-
-## Ollama Local
-
-CheckIA usa Ollama local para el agente conversacional sin enviar datos a servicios externos. Antes de redactar, el backend calcula reglas, ML, anomalías, NLP y explicación; luego Ollama recibe solo datos compactos y responde en lenguaje natural.
-
-```powershell
-ollama pull gemma2:2b
-ollama serve
-```
-
-Prueba rápida:
-
-```powershell
-Invoke-RestMethod -Uri "http://localhost:11434/api/generate" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body '{"model":"gemma2:2b","prompt":"Hola","stream":false}'
-```
-
-Variables disponibles:
-
-```text
 OLLAMA_ENABLED=true
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=checkia-gemma
+OLLAMA_FALLBACK_MODEL=gemma2:2b
 OLLAMA_TIMEOUT_SECONDS=25
 ```
 
-Modelo local educado para CheckIA:
+## Base de datos
 
-```powershell
-ollama create checkia-gemma -f backend/src/ai_agent/Modelfile
+Crear la base `checkia`:
+
+```bash
+mysql -u root -p < database/checkia.sql
 ```
 
-Si usas otro nombre de modelo, cambia `OLLAMA_MODEL` por ese nombre.
+Con XAMPP normalmente basta con usar:
 
-## Instalación Frontend
+```env
+DB_USER=root
+DB_PASSWORD=
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=checkia
+```
+
+La base almacena siniestros, pólizas, asegurados, proveedores, documentos, textos extraídos, facturas, partes policiales, declaraciones de accidente, alertas, análisis de riesgo e historial del chat.
+
+## Instalación del backend
+
+Desde la raíz del proyecto:
+
+```bash
+python -m venv .venv
+```
+
+Windows:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Linux/macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+Instalar dependencias:
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Ejecutar API:
+
+```bash
+uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+API local:
+
+```text
+http://127.0.0.1:8000
+```
+
+Verificación:
+
+```bash
+curl http://127.0.0.1:8000/api/health
+curl http://127.0.0.1:8000/api/system/status
+```
+
+## Instalación del frontend
 
 ```bash
 cd frontend
@@ -95,59 +172,266 @@ npm install
 npm run dev
 ```
 
-Aplicación local: `http://localhost:5173`
+Aplicación local:
 
-## Comandos Útiles
-
-```bash
-python -m pytest backend/tests
-cd frontend && npm run build
+```text
+http://localhost:5173
 ```
 
-## Score de Riesgo
+Compilar para producción:
 
-El score final combina tres capas:
+```bash
+npm run build
+```
 
-- Reglas de negocio explicables: 70%.
-- Modelo IA y anomalías: 20%.
-- NLP con TF-IDF y similitud de coseno: 10%.
+## Ollama
 
-Niveles:
+Instalar o verificar Ollama:
 
-- 0 a 40: Verde / Bajo.
-- 41 a 75: Amarillo / Medio.
-- 76 a 100: Rojo / Alto.
+```bash
+ollama --version
+```
+
+Descargar modelo base:
+
+```bash
+ollama pull gemma2:2b
+```
+
+Crear modelo especializado de CheckIA:
+
+```bash
+ollama create checkia-gemma -f Modelfile
+```
+
+Probar Ollama:
+
+```bash
+curl http://localhost:11434/api/generate -d "{\"model\":\"gemma2:2b\",\"prompt\":\"Hola, responde en español.\",\"stream\":false}"
+```
+
+Si `checkia-gemma` no existe, el backend usa `OLLAMA_FALLBACK_MODEL=gemma2:2b` para que el agente siga funcionando.
+
+## OCR y PDFs
+
+CheckIA primero intenta extraer texto directo del PDF. Si el texto es insuficiente, usa OCR.
+
+En Windows:
+
+```powershell
+winget install UB-Mannheim.TesseractOCR
+```
+
+Poppler puede instalarse manualmente o mantenerse en `tools/poppler` como en este proyecto.
+
+En Ubuntu/VPS:
+
+```bash
+apt update
+apt install -y tesseract-ocr tesseract-ocr-spa poppler-utils
+```
+
+Verificar:
+
+```bash
+tesseract --version
+pdftoppm -v
+```
+
+## Uso de la aplicación
+
+1. Abre la página **Datos**.
+2. Verifica que MySQL, Backend, Ollama y OCR estén activos.
+3. Sube el Excel completo con las hojas del reto.
+4. Sube el lote de PDFs: facturas, declaraciones de accidente y partes policiales.
+5. Revisa el dashboard y los gráficos.
+6. Entra a **Casos** para ordenar, filtrar y abrir el detalle de un siniestro.
+7. Consulta al **Agente IA** con preguntas como:
+
+- ¿Qué documentos tiene el siniestro SIN-0022?
+- ¿Por qué se prioriza SIN-0022?
+- ¿Hay inconsistencias entre Excel y PDFs?
+- ¿Qué proveedores concentran más alertas?
+- ¿Qué casos tienen documentos faltantes?
+- Genera un resumen ejecutivo.
+
+## Dataset esperado
+
+El Excel debe contener estas hojas:
+
+- `1_Siniestros`
+- `2_Polizas`
+- `3_Asegurados`
+- `4_Proveedores`
+- `5_Documentos`
+
+La hoja `README` es aceptada si existe, pero no es obligatoria para el análisis.
+
+Los documentos PDF pueden venir en carpetas o lotes:
+
+- Declaraciones de accidente: archivos tipo `DA_SIN-0378_DOC-0952.pdf`.
+- Facturas: archivos tipo `Muestras_Facturas_Siniestros-SIN-0005.pdf`.
+- Partes policiales: archivos tipo `PP_SIN-0005_DOC-0012.pdf`.
+
+El sistema relaciona automáticamente por ID de siniestro, ID de documento, nombre de archivo y texto interno extraído.
+
+## Score de riesgo
+
+El score se calcula de forma explicable combinando:
+
+- Riesgo del asegurado.
+- Riesgo del proveedor.
+- Estado de póliza.
+- Reclamos previos.
+- Documentos incompletos o faltantes.
+- Inconsistencias entre Excel y PDFs.
+- Montos reclamados frente a suma asegurada o promedio del proveedor.
+- Similitud narrativa.
+- Evidencia de documento alterado.
+- Reporte tardío o fechas inconsistentes.
+
+Rangos:
+
+- 0 a 30: Bajo.
+- 31 a 60: Medio.
+- 61 a 80: Alto.
+- 81 a 100: Crítico.
+
+Toda alerta requiere revisión humana.
 
 ## Agente IA
 
-La página Agente IA permite consultar datos en lenguaje natural. El flujo es híbrido: el backend interpreta la intención, ejecuta predicción/análisis con datos reales y Ollama redacta la respuesta final. Los IDs como `CLM-0131` son clickeables y abren el detalle del caso.
+El agente usa un enfoque híbrido:
 
-El historial del chat se guarda en MySQL por conversaciones, parecido a ChatGPT. Puedes crear un nuevo chat, volver a conversaciones anteriores y eliminar chats completos.
+1. El backend interpreta la pregunta.
+2. Consulta MySQL, alertas, documentos y textos extraídos.
+3. Prepara contexto compacto y trazable.
+4. Ollama redacta una respuesta amable, breve o detallada según la pregunta.
 
-## Dataset
+El agente puede responder sobre:
 
-El proyecto incluye siniestros sintéticos iniciales y tablas de pólizas, clientes, proveedores y documentos. Desde la página **Datos** puedes crear un CSV adicional para descargarlo y luego cargarlo manualmente desde tus archivos. Solo al cargarlo se recalcula el modelo y cambian los indicadores.
+- siniestros
+- pólizas
+- asegurados
+- proveedores
+- documentos asociados
+- facturas
+- declaraciones de accidente
+- partes policiales
+- OCR
+- alertas
+- ranking de riesgo
+- resumen ejecutivo
 
-## Ética
+Las respuestas deben indicar fuentes como Excel, PDF, OCR, factura, parte policial o declaración de accidente cuando aplique.
 
-CheckIA no acusa fraude. Una alerta no constituye prueba ni decisión. Todo caso marcado como medio o alto requiere revisión humana antes de cualquier acción operativa, contractual o legal.
+## Ética y limitaciones
 
-## Demo Sugerida
+CheckIA es un prototipo de apoyo a la revisión. No emite acusaciones, no decide pagos, no rechaza siniestros y no genera conclusiones legales. Los datos usados deben ser sintéticos o públicos y no deben contener información personal real o confidencial.
 
-1. Abrir Dashboard y revisar KPIs, gráficas y resumen inteligente.
-2. Entrar a Datos, verificar MySQL y sincronizar resultados IA.
-3. Generar un CSV sintético descargable.
-4. Cargar ese CSV manualmente desde tus archivos y comprobar cambios en KPIs.
-5. Entrar a Casos, filtrar por riesgo alto, abrir un detalle y registrar seguimiento humano.
-6. Usar Agente IA y mostrar historial por conversaciones.
-7. Generar Reporte Ejecutivo y exportar JSON.
-
-## Estructura
+Mensaje base:
 
 ```text
-backend/       API FastAPI, datos, reglas, modelo, agente y servicios
-frontend/      Aplicación React con dashboard, casos, agente, datos y reportes
-database/      SQL para crear la base checkia
-docs/          Documentación técnica y ética
-presentation/  Guion de pitch de 10 minutos
+Esta alerta no constituye una acusación de fraude. El caso requiere revisión humana antes de cualquier decisión.
 ```
+
+## Comandos útiles
+
+Backend:
+
+```bash
+uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Build:
+
+```bash
+cd frontend
+npm run build
+```
+
+Pruebas:
+
+```bash
+python -m pytest backend/tests
+```
+
+Estado:
+
+```bash
+curl http://127.0.0.1:8000/api/system/status
+```
+
+## Despliegue básico en VPS
+
+Instalar dependencias del servidor:
+
+```bash
+apt update
+apt install -y python3-venv python3-pip nodejs npm nginx mysql-server tesseract-ocr tesseract-ocr-spa poppler-utils
+```
+
+Instalar Ollama:
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull gemma2:2b
+ollama create checkia-gemma -f Modelfile
+```
+
+Preparar backend:
+
+```bash
+cd /opt/CheckIA
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Preparar frontend:
+
+```bash
+cd /opt/CheckIA/frontend
+npm install
+npm run build
+```
+
+Ejecutar backend para prueba:
+
+```bash
+cd /opt/CheckIA
+source .venv/bin/activate
+uvicorn backend.main:app --host 127.0.0.1 --port 8000
+```
+
+En producción se recomienda configurar `systemd` para FastAPI, Nginx como proxy y SSL con Certbot.
+
+## Demo sugerida
+
+1. Mostrar **Estado del sistema** con MySQL, Ollama y OCR activos.
+2. Importar el Excel del reto.
+3. Subir PDFs de facturas, declaraciones y partes policiales.
+4. Abrir Dashboard y mostrar distribución de riesgo.
+5. Filtrar gráficos por riesgo, ciudad o proveedor.
+6. Abrir un caso crítico y revisar documentos, alertas y explicación.
+7. Preguntar al agente: “¿Por qué se prioriza SIN-0022?”.
+8. Generar el reporte ejecutivo.
+
+## Archivos que no se deben subir
+
+No subas archivos temporales, ambientes locales ni paquetes de despliegue:
+
+- `.env`
+- `.venv/`
+- `node_modules/`
+- `frontend/dist/`
+- `*.tar.gz`
+- logs locales
+
